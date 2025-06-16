@@ -12,3 +12,11 @@ def create_supplier_profile(sender, instance, created, **kwargs):
     """
     if created and instance.user_type == 'supplier' and not hasattr(instance, 'supplier_profile'):
         Supplier.objects.create(user=instance)
+        
+@receiver(post_save, sender=User)
+def create_existing_supplier_profiles(sender, instance, **kwargs):
+    """
+    Создает профиль поставщика для существующих пользователей с типом 'supplier'
+    """
+    if instance.user_type == 'supplier' and not hasattr(instance, 'supplier_profile'):
+        Supplier.objects.get_or_create(user=instance)

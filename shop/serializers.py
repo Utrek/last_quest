@@ -31,29 +31,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
     password = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
-        username = data.get('username', None)
-        password = data.get('password', None)
-
-        if username is None:
-            raise serializers.ValidationError('Требуется имя пользователя')
-        if password is None:
-            raise serializers.ValidationError('Требуется пароль')
-
-        user = authenticate(username=username, password=password)
-
-        if user is None:
-            raise serializers.ValidationError('Неверное имя пользователя или пароль')
-
-        if not user.is_active:
-            raise serializers.ValidationError('Пользователь деактивирован')
-
-        return {
-            'username': user.username,
-            'token': 'token_will_be_generated_in_view'
-        }
+        return data
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -83,6 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ('id', 'name', 'description', 'price', 'supplier', 'category', 'stock', 'image', 'is_active')
+        read_only_fields = ('supplier',)
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
@@ -93,10 +74,21 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    status_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
-        fields = ('id', 'user', 'created_at', 'updated_at', 'status', 'total_amount', 'items')
+        fields = ('id', 'user', 'created_at', 'updated_at', 'status', 'status_display', 'total_amount', 'items')
+    
+    def get_status_display(self, obj):
+        status_map = {
+            'pending': 'Ожидание',
+            'processing': 'В обработке',
+            'shipped': 'Отправлен',
+            'delivered': 'Доставлен',
+            'cancelled': 'Отменен'
+        }
+        return status_map.get(obj.status, obj.status)
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
@@ -106,4 +98,9 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ('id', 'product', 'product_name', 'product_price', 'product_image', 'quantity')
+        
+    def update(self, instance, validated_data):
+        instance.quantity = validated_data.get('quantity', instance.quantity)
+        instance.save()
+        return instance
 

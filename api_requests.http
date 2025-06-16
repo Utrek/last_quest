@@ -1,0 +1,248 @@
+### Переменные
+@baseUrl = http://localhost:8000/api
+@token = 8e5c6e14b510b8d48cfc5848f61a9ea7d48a688b
+
+### Тестовый эндпоинт
+GET {{baseUrl}}/test/
+
+### Получение списка категорий
+GET {{baseUrl}}/categories/
+Content-Type: application/json
+
+### Создание категории
+POST {{baseUrl}}/categories/create/
+Content-Type: application/json
+
+{
+  "name": "Электроника"
+}
+
+### Вход суперпользователя
+POST {{baseUrl}}/login/
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Регистрация нового пользователя
+POST {{baseUrl}}/register/
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "securepassword123",
+  "password2": "securepassword123",
+  "first_name": "Test",
+  "last_name": "User",
+  "phone": "+79001234567",
+  "address": "Test Address",
+  "user_type": "customer"
+}
+### Вход в систему 
+POST {{baseUrl}}/login/
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "securepassword123"}
+
+### Регистрация нового поставщика
+POST {{baseUrl}}/register/
+Content-Type: application/json
+
+{
+  "username": "supplier3",
+  "email": "supplier@exam3ple.com",
+  "password": "securepassword123",
+  "password2": "securepassword123",
+  "first_name": "Supplier",
+  "last_name": "User",
+  "phone": "+79009876543",
+  "address": "Supplier Address",
+  "user_type": "supplier",
+  "company_name": "Test Company"
+}
+
+### Вход в систему поставщика
+POST {{baseUrl}}/login/
+Content-Type: application/json
+
+{
+  "username": "supplier1",
+  "password": "securepassword123"
+}
+
+### Запрос на сброс пароля
+POST {{baseUrl}}/password-reset/
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### Подтверждение сброса пароля
+POST {{baseUrl}}/password-reset-confirm/
+Content-Type: application/json
+
+{
+  "token": "uid/token",
+  "password": "newpassword123",
+  "password2": "newpassword123"
+}
+
+### Получение списка продуктов
+GET {{baseUrl}}/products/
+Content-Type: application/json
+
+### Поиск продуктов
+GET {{baseUrl}}/products/?search=мясо
+Content-Type: application/json
+
+### Фильтрация продуктов по категории
+GET {{baseUrl}}/products/?category=1
+Content-Type: application/json
+
+### Сортировка продуктов по цене (возрастание)
+GET {{baseUrl}}/products/?ordering=price
+Content-Type: application/json
+
+### Сортировка продуктов по цене (убывание)
+GET {{baseUrl}}/products/?ordering=-price
+Content-Type: application/json
+
+### Получение корзины пользователя
+GET {{baseUrl}}/cart/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Добавление товара в корзину
+POST {{baseUrl}}/cart/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "product": 6,
+  "quantity": 2
+}
+
+### Изменение количества товара в корзине
+POST {{baseUrl}}/cart/update_quantity/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "product": 3,
+  "quantity": 5
+}
+
+### Удаление товара из корзины
+DELETE {{baseUrl}}/cart/3/
+Authorization: Token {{token}}
+
+### Оформление заказа
+POST {{baseUrl}}/cart/checkout/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Получение списка заказов пользователя
+GET {{baseUrl}}/orders/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Получение информации о конкретном заказе
+GET {{baseUrl}}/orders/2/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Отмена заказа
+POST {{baseUrl}}/orders/2/cancel/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Попытка изменить отмененный заказ
+PUT {{baseUrl}}/orders/2/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "status": "pending"
+}
+
+### Попытка частично изменить отмененный заказ
+PATCH {{baseUrl}}/orders/2/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "status": "pending"
+}
+
+### ЗАПРОСЫ ДЛЯ ПОСТАВЩИКА ###
+
+### Получение списка своих товаров (для поставщика)
+GET {{baseUrl}}/supplier/products/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Добавление нового товара (для поставщика)
+POST {{baseUrl}}/supplier/products/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "name": "Новый товар3",
+  "description": "Описание нового товара",
+  "price": 999.99,
+  "category": 1,
+  "stock": 100,
+  "is_active": true
+}
+
+### Обновление товара (для поставщика)
+PUT {{baseUrl}}/supplier/products/1/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "name": "Обновленный товар",
+  "description": "Обновленное описание товара",
+  "price": 1099.99,
+  "category": 1,
+  "stock": 150,
+  "is_active": true
+}
+
+### Удаление товара (для поставщика)
+DELETE {{baseUrl}}/supplier/products/1/
+Authorization: Token {{token}}
+
+### Обновление цен на товары (для поставщика)
+POST {{baseUrl}}/supplier/products/update_prices/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "id": 1,
+      "price": 1199.99
+    },
+    {
+      "id": 2,
+      "price": 899.99
+    }
+  ]
+}
+
+### Переключение статуса приема заказов (для поставщика)
+POST {{baseUrl}}/supplier/products/toggle_accepting_orders/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Получение заказов с товарами поставщика
+GET {{baseUrl}}/supplier/products/orders/
+Authorization: Token {{token}}
+Content-Type: application/json

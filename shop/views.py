@@ -38,17 +38,26 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = authenticate(
-                username=serializer.validated_data['username'],
-                password=serializer.validated_data['password']
-            ) 
+            username = serializer.validated_data.get('username')
+            password = serializer.validated_data.get('password')
+            
+            user = authenticate(username=username, password=password)
+            
             if user is None:
                 return Response({"error": "Неверные учетные данные"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            if not user.is_active:
+                return Response({"error": "Пользователь деактивирован"}, status=status.HTTP_401_UNAUTHORIZED)
                 
             token, created = Token.objects.get_or_create(user=user)
+            
             return Response({
                 'token': token.key,
-                'user': UserSerializer(user).data
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
+                }
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -106,7 +115,7 @@ class PasswordResetConfirmView(APIView):
 
 class IsSupplier(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_supplier()
+        return request.user.is_authenticated and hasattr(request.user, 'is_supplier') and request.user.is_supplier()
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -143,7 +152,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 class SupplierViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsSupplier]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ProductSerializer
     
     def get_queryset(self):
@@ -152,6 +161,13 @@ class SupplierViewSet(viewsets.ModelViewSet):
             return Product.objects.filter(supplier=supplier)
         except Supplier.DoesNotExist:
             return Product.objects.none()
+            
+    def perform_create(self, serializer):
+        try:
+            supplier = Supplier.objects.get(user=self.request.user)
+            serializer.save(supplier=supplier)
+        except Supplier.DoesNotExist:
+            raise permissions.exceptions.PermissionDenied("Только поставщики могут добавлять товары")
     
     @action(detail=False, methods=['post'])
     def toggle_accepting_orders(self, request):
@@ -212,11 +228,62 @@ class CartViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
     
     @action(detail=False, methods=['post'])
+    def update_quantity(self, request):
+        """
+        Обновление количества товара в корзине
+        """
+        product_id = request.data.get('product')
+        quantity = request.data.get('quantity')
+        
+        if not product_id or not quantity:
+            return Response(
+                {"error": "Необходимо указать product и quantity"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            cart_item = CartItem.objects.get(user=request.user, product_id=product_id)
+            cart_item.quantity = quantity
+            cart_item.save()
+            serializer = self.get_serializer(cart_item)
+            return Response(serializer.data)
+        except CartItem.DoesNotExist:
+            return Response(
+                {"error": f"Товар с ID {product_id} не найден в корзине"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=False, methods=['post'])
     def checkout(self, request):
         cart_items = CartItem.objects.filter(user=request.user)
         
         if not cart_items.exists():
             return Response({"error": "Корзина пуста"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Проверяем наличие товаров на складе
+        insufficient_items = []
+        for cart_item in cart_items:
+            if cart_item.product.stock < cart_item.quantity:
+                insufficient_items.append({
+                    'product_id': cart_item.product.id,
+                    'product_name': cart_item.product.name,
+                    'requested': cart_item.quantity,
+                    'available': cart_item.product.stock
+                })
+        
+        # Если есть товары с недостаточным количеством, предлагаем вариант
+        if insufficient_items:
+            return Response({
+                "warning": "Недостаточно товаров на складе",
+                "insufficient_items": insufficient_items,
+                "options": [
+                    "Уменьшите количество товаров в корзине",
+                    "Используйте параметр 'partial=true' для оформления заказа с доступным количеством"
+                ]
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Параметр для частичного оформления заказа
+        partial = request.data.get('partial', False)
         
         # Создаем заказ
         order = Order.objects.create(
@@ -227,37 +294,59 @@ class CartViewSet(viewsets.ModelViewSet):
         
         total = 0
         for cart_item in cart_items:
-            # Проверяем наличие товара
-            if cart_item.product.stock < cart_item.quantity:
+            # Определяем количество для заказа
+            quantity = min(cart_item.quantity, cart_item.product.stock) if partial else cart_item.quantity
+            
+            # Если не частичный заказ и недостаточно товара, отменяем
+            if not partial and cart_item.product.stock < cart_item.quantity:
                 order.delete()
                 return Response(
-                    {"error": f"Недостаточно товара {cart_item.product.name} на складе"},
+                    {"error": f"Недостаточно товара {cart_item.product.name} на складе. Доступно: {cart_item.product.stock}"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # Если товара нет в наличии, пропускаем
+            if quantity == 0:
+                continue
+                
             # Создаем элемент заказа
             OrderItem.objects.create(
                 order=order,
                 product=cart_item.product,
-                quantity=cart_item.quantity,
+                quantity=quantity,
                 price=cart_item.product.price
             )
             
             # Обновляем остаток товара
-            cart_item.product.stock -= cart_item.quantity
+            cart_item.product.stock -= quantity
             cart_item.product.save()
             
             # Считаем общую сумму
-            total += cart_item.quantity * cart_item.product.price
+            total += quantity * cart_item.product.price
+            
+            # Если частичный заказ и взяли меньше, чем было в корзине
+            if partial and quantity < cart_item.quantity:
+                cart_item.quantity -= quantity
+                cart_item.save()
+            else:
+                cart_item.delete()
+        
+        # Если не добавили ни одного товара, отменяем заказ
+        if not order.items.exists():
+            order.delete()
+            return Response(
+                {"error": "Не удалось оформить заказ, все товары отсутствуют на складе"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Обновляем общую сумму заказа
         order.total_amount = total
         order.save()
         
-        # Очищаем корзину
-        cart_items.delete()
-        
-        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+        return Response({
+            "message": "Заказ успешно оформлен" + (" (частично)" if partial else ""),
+            "order": OrderSerializer(order).data
+        }, status=status.HTTP_201_CREATED)
 class OrderViewSet(viewsets.ModelViewSet):
     """
     API для работы с заказами пользователя
@@ -270,6 +359,24 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == 'cancelled':
+            return Response(
+                {"error": "Невозможно изменить отмененный заказ"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().update(request, *args, **kwargs)
+        
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == 'cancelled':
+            return Response(
+                {"error": "Невозможно изменить отмененный заказ"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().partial_update(request, *args, **kwargs)
     
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -283,7 +390,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             order.status = 'cancelled'
             order.save()
-            return Response({"detail": "Заказ успешно отменен"})
+            
+            # Возвращаем полную информацию о заказе с обновленным статусом
+            serializer = self.get_serializer(order)
+            return Response({
+                "detail": "Заказ успешно отменен",
+                "order": serializer.data
+            })
         else:
             return Response(
                 {"error": "Невозможно отменить заказ в текущем статусе"},
