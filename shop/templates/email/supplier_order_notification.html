@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Новый заказ для исполнения</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .order-details {
+            margin: 20px 0;
+        }
+        .order-items {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .order-items th, .order-items td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .total {
+            margin-top: 20px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Новый заказ для исполнения</h1>
+        </div>
+        
+        <p>Здравствуйте, {{ supplier.user.first_name }} {{ supplier.user.last_name }}!</p>
+        
+        <p>Поступил новый заказ, содержащий ваши товары. Ниже приведены детали заказа:</p>
+        
+        <div class="order-details">
+            <p><strong>Номер заказа:</strong> {{ order.id }}</p>
+            <p><strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+            <p><strong>Статус заказа:</strong> {{ order.get_status_display }}</p>
+        </div>
+        
+        <h3>Товары для исполнения:</h3>
+        <table class="order-items">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Артикул</th>
+                    <th>Количество</th>
+                    <th>Цена</th>
+                    <th>Сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in supplier_items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.product.sku|default:"—" }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.price }} руб.</td>
+                    <td>{{ item.total_price }} руб.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="total">
+            <p>Итого по вашим товарам: {{ total_amount }} руб.</p>
+        </div>
+        
+        <h3>Информация о доставке:</h3>
+        <p><strong>Получатель:</strong> {{ order.delivery_address.recipient_name }}</p>
+        <p><strong>Адрес:</strong> {{ order.delivery_address.address }}</p>
+        <p><strong>Телефон:</strong> {{ order.delivery_address.phone }}</p>
+        
+        <p>Пожалуйста, подготовьте товары к отправке как можно скорее.</p>
+        
+        <div class="footer">
+            <p>С уважением, команда интернет-магазина</p>
+        </div>
+    </div>
+</body>
+</html>

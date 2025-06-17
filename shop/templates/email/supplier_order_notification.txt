@@ -1,0 +1,26 @@
+Новый заказ для исполнения
+
+Здравствуйте, {{ supplier.user.first_name }} {{ supplier.user.last_name }}!
+
+Поступил новый заказ, содержащий ваши товары. Ниже приведены детали заказа:
+
+Номер заказа: {{ order.id }}
+Дата заказа: {{ order.created_at|date:"d.m.Y H:i" }}
+Статус заказа: {{ order.get_status_display }}
+
+Товары для исполнения:
+{% for item in supplier_items %}
+- {{ item.product.name }} ({{ item.product.sku|default:"—" }}) x {{ item.quantity }} = {{ item.price }} руб. за шт., всего: {{ item.total_price }} руб.
+{% endfor %}
+
+Итого по вашим товарам: {{ total_amount }} руб.
+
+Информация о доставке:
+Получатель: {{ order.delivery_address.recipient_name }}
+Адрес: {{ order.delivery_address.address }}
+Телефон: {{ order.delivery_address.phone }}
+
+Пожалуйста, подготовьте товары к отправке как можно скорее.
+
+С уважением,
+Команда интернет-магазина

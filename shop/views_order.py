@@ -95,8 +95,13 @@ class OrderConfirmationView(viewsets.ViewSet):
         # Отправляем email с подтверждением заказа
         email_sent = send_order_confirmation_email_async(order)
         
+        # Отправляем уведомление поставщикам
+        from .async_email import send_supplier_order_notification_async
+        supplier_email_sent = send_supplier_order_notification_async(order)
+        
         return Response({
             "message": "Заказ успешно оформлен",
             "email_sent": email_sent,
+            "supplier_email_sent": supplier_email_sent,
             "order": OrderSerializer(order).data
         }, status=status.HTTP_201_CREATED)

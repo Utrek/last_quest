@@ -458,12 +458,16 @@ class CartViewSet(viewsets.ModelViewSet):
         order.save()
         
         # Отправляем email с подтверждением заказа асинхронно
-        from .async_email import send_order_confirmation_email_async
+        from .async_email import send_order_confirmation_email_async, send_supplier_order_notification_async
         email_sent = send_order_confirmation_email_async(order)
+        
+        # Отправляем уведомление поставщикам
+        supplier_email_sent = send_supplier_order_notification_async(order)
         
         return Response({
             "message": "Заказ успешно оформлен" + (" (частично)" if partial else ""),
             "email_sent": email_sent,
+            "supplier_email_sent": supplier_email_sent,
             "order": OrderSerializer(order).data
         }, status=status.HTTP_201_CREATED)
 class OrderViewSet(viewsets.ModelViewSet):
