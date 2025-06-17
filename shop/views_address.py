@@ -1,6 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.request import Request
+from typing import Dict, Any, Optional, Union, List, Tuple, cast, Type, QuerySet
 from .models import DeliveryAddress
 from .serializers import DeliveryAddressSerializer
 
@@ -11,14 +13,14 @@ class DeliveryAddressViewSet(viewsets.ModelViewSet):
     serializer_class = DeliveryAddressSerializer
     permission_classes = [permissions.IsAuthenticated]
     
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[DeliveryAddress]:
         return DeliveryAddress.objects.filter(user=self.request.user)
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
     
     @action(detail=True, methods=['post'])
-    def set_default(self, request, pk=None):
+    def set_default(self, request: Request, pk: Optional[int] = None) -> Response:
         """
         Установить адрес как адрес по умолчанию
         """

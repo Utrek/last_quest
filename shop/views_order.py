@@ -1,7 +1,9 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Order, CartItem
+from rest_framework.request import Request
+from typing import Dict, Any, Optional, Union, List, Tuple, cast
+from .models import Order, CartItem, DeliveryAddress, OrderItem
 from .serializers import OrderSerializer
 from .email_utils import send_order_confirmation_email_async
 
@@ -12,7 +14,7 @@ class OrderConfirmationView(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     @action(detail=False, methods=['post'])
-    def confirm(self, request):
+    def confirm(self, request: Request) -> Response:
         """
         Подтверждение заказа
         """

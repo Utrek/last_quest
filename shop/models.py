@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from typing import Dict, Any, Optional, Union, List, Tuple, cast
+from decimal import Decimal
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -15,7 +17,7 @@ class User(AbstractUser):
     company_name = models.CharField(max_length=100, blank=True, null=True)
     is_accepting_orders = models.BooleanField(default=True)
     
-    def is_supplier(self):
+    def is_supplier(self) -> bool:
         return self.user_type == 'supplier'
 
 
@@ -67,7 +69,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
         
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Преобразует объект товара в словарь для экспорта"""
         return {
             'sku': self.sku,
@@ -81,7 +83,7 @@ class Product(models.Model):
         }
         
     @classmethod
-    def from_dict(cls, data, supplier):
+    def from_dict(cls, data: Dict[str, Any], supplier: 'Supplier') -> 'Product':
         """Создает или обновляет товар из словаря"""
         category, _ = Category.objects.get_or_create(name=data.get('category', 'Без категории'))
         

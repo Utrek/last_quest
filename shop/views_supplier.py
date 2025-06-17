@@ -1,6 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.request import Request
+from typing import Dict, Any, Optional, Union, List, Tuple, cast
 from .models import Supplier, Product
 from .serializers import ProductSerializer
 from django.db.models import Prefetch
@@ -12,7 +14,7 @@ class SupplierExportViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     @action(detail=False, methods=['post'])
-    def export_to_file(self, request):
+    def export_to_file(self, request: Request) -> Response:
         """
         Экспорт товаров в YAML файл на сервере
         """
