@@ -46,27 +46,32 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            username = serializer.validated_data.get('username')
+            email = serializer.validated_data.get('email')
             password = serializer.validated_data.get('password')
             
-            user = authenticate(username=username, password=password)
-            
-            if user is None:
-                return Response({"error": "Неверные учетные данные"}, status=status.HTTP_401_UNAUTHORIZED)
-            
-            if not user.is_active:
-                return Response({"error": "Пользователь деактивирован"}, status=status.HTTP_401_UNAUTHORIZED)
-                
-            token, created = Token.objects.get_or_create(user=user)
-            
-            return Response({
-                'token': token.key,
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                }
-            })
+            # Пытаемся найти пользователя по email
+            try:
+                user = User.objects.get(email=email)
+                if user.check_password(password):
+                    if not user.is_active:
+                        return Response({"error": "Пользователь деактивирован"}, status=status.HTTP_401_UNAUTHORIZED)
+                    
+                    token, created = Token.objects.get_or_create(user=user)
+                    
+                    return Response({
+                        'token': token.key,
+                        'user': {
+                            'id': user.id,
+                            'username': user.username,
+                            'email': user.email,
+                            'first_name': user.first_name,
+                            'last_name': user.last_name
+                        }
+                    })
+                else:
+                    return Response({"error": "Неверный пароль"}, status=status.HTTP_401_UNAUTHORIZED)
+            except User.DoesNotExist:
+                return Response({"error": "Пользователь с таким email не найден"}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetRequestView(APIView):

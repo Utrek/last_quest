@@ -29,7 +29,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=255)
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(max_length=128, write_only=True)
 
     def validate(self, data):
@@ -75,8 +75,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class DeliveryAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryAddress
-        fields = ('id', 'name', 'recipient_name', 'phone', 'address', 'city', 'postal_code', 'is_default')
-        read_only_fields = ('user',)
+        fields = (
+            'id', 'name', 'last_name', 'first_name', 'middle_name', 
+            'recipient_name', 'email', 'phone', 'city', 'street', 
+            'house', 'building', 'structure', 'apartment', 
+            'postal_code', 'address', 'is_default'
+        )
+        read_only_fields = ('user', 'address')
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)

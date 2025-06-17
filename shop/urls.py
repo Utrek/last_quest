@@ -41,6 +41,10 @@ router.register(r'orders', views.OrderViewSet, basename='orders')
 from .views_address import DeliveryAddressViewSet
 router.register(r'addresses', DeliveryAddressViewSet, basename='addresses')
 
+# Импортируем ViewSet для подтверждения заказа
+from .views_order import OrderConfirmationView
+router.register(r'order-confirmation', OrderConfirmationView, basename='order-confirmation')
+
 urlpatterns = [
     path('api/test/', api_test, name='api-test'),
     path('api/categories/', list_categories, name='list-categories'),

@@ -17,13 +17,13 @@ Content-Type: application/json
   "name": "Игрушки"
 }
 
-### Вход суперпользователя
+### Вход по email и паролю
 POST {{baseUrl}}/login/
 Content-Type: application/json
 
 {
-  "username": "admin",
-  "password": "admin123"
+  "email": "utrek@mail.ru",
+  "password": "securepassword123"
 }
 
 ### Регистрация нового пользователя
@@ -31,42 +31,15 @@ POST {{baseUrl}}/register/
 Content-Type: application/json
 
 {
-  "username": "testuser3",
-  "email": "test1@example.com",
+  "username": "testuser4",
+  "email": "utrek@mail.ru",
   "password": "securepassword123",
   "password2": "securepassword123",
-  "first_name": "Test",
-  "last_name": "User",
+  "first_name": "Иван",
+  "last_name": "Иванов",
   "phone": "+79001234567",
   "address": "Test Address",
   "user_type": "customer"
-}
-
-### Вход в систему 
-POST {{baseUrl}}/login/
-Content-Type: application/json
-
-{
-  "username": "testuser3",
-  "password": "securepassword123"
-}
-
-### Запрос на сброс пароля
-POST {{baseUrl}}/password-reset/
-Content-Type: application/json
-
-{
-  "email": "test@example.com"
-}
-
-### Подтверждение сброса пароля
-POST {{baseUrl}}/password-reset-confirm/
-Content-Type: application/json
-
-{
-  "token": "uid/token",
-  "password": "newpassword123",
-  "password2": "newpassword123"
 }
 
 ### УПРАВЛЕНИЕ АДРЕСАМИ ДОСТАВКИ ###
@@ -76,34 +49,26 @@ GET {{baseUrl}}/addresses/
 Authorization: Token {{token}}
 Content-Type: application/json
 
-### Создание адреса доставки
+### Создание адреса доставки (новый формат)
 POST {{baseUrl}}/addresses/
 Authorization: Token {{token}}
 Content-Type: application/json
 
 {
   "name": "Дом",
+  "last_name": "Иванов",
+  "first_name": "Иван",
+  "middle_name": "Иванович",
   "recipient_name": "Иван Иванов",
+  "email": "ivan@example.com",
   "phone": "+79001234567",
-  "address": "ул. Примерная, д. 1, кв. 1",
   "city": "Москва",
+  "street": "Примерная",
+  "house": "1",
+  "building": "2",
+  "apartment": "3",
   "postal_code": "123456",
   "is_default": true
-}
-
-### Создание второго адреса доставки
-POST {{baseUrl}}/addresses/
-Authorization: Token {{token}}
-Content-Type: application/json
-
-{
-  "name": "Работа",
-  "recipient_name": "Иван Иванов",
-  "phone": "+79001234567",
-  "address": "ул. Рабочая, д. 10, офис 101",
-  "city": "Москва",
-  "postal_code": "654321",
-  "is_default": false
 }
 
 ### Получение информации об адресе доставки
@@ -118,22 +83,20 @@ Content-Type: application/json
 
 {
   "name": "Дом",
+  "last_name": "Иванов",
+  "first_name": "Иван",
+  "middle_name": "Иванович",
   "recipient_name": "Иван Иванов",
+  "email": "ivan@example.com",
   "phone": "+79001234567",
-  "address": "ул. Примерная, д. 1, кв. 2",
   "city": "Москва",
+  "street": "Новая",
+  "house": "10",
+  "building": "2",
+  "apartment": "5",
   "postal_code": "123456",
   "is_default": true
 }
-
-### Установка адреса доставки по умолчанию
-POST {{baseUrl}}/addresses/2/set_default/
-Authorization: Token {{token}}
-Content-Type: application/json
-
-### Удаление адреса доставки
-DELETE {{baseUrl}}/addresses/2/
-Authorization: Token {{token}}
 
 ### РАБОТА С КОРЗИНОЙ И ЗАКАЗАМИ ###
 
@@ -182,10 +145,6 @@ Content-Type: application/json
   "quantity": 2
 }
 
-### Удаление товара из корзины по ID элемента корзины
-DELETE {{baseUrl}}/cart/8/
-Authorization: Token {{token}}
-
 ### Удаление товара из корзины по ID продукта
 POST {{baseUrl}}/cart/remove_product/
 Authorization: Token {{token}}
@@ -195,8 +154,18 @@ Content-Type: application/json
   "product": 5
 }
 
-### Оформление заказа с указанием адреса доставки
-POST {{baseUrl}}/cart/checkout/
+### Подтверждение заказа с указанием ID корзины и ID адреса доставки
+POST {{baseUrl}}/order-confirmation/confirm/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "cart_id": 1,
+  "delivery_address_id": 1
+}
+
+### Подтверждение заказа с указанием только ID адреса доставки (все товары из корзины)
+POST {{baseUrl}}/order-confirmation/confirm/
 Authorization: Token {{token}}
 Content-Type: application/json
 
@@ -238,12 +207,12 @@ Content-Type: application/json
   "company_name": "Test Company"
 }
 
-### Вход в систему поставщика
+### Вход в систему поставщика по email
 POST {{baseUrl}}/login/
 Content-Type: application/json
 
 {
-  "username": "supplier1",
+  "email": "supplier@example.com",
   "password": "securepassword123"
 }
 
@@ -263,7 +232,12 @@ Content-Type: application/json
   "price": 999.99,
   "category": 1,
   "stock": 100,
-  "is_active": true
+  "is_active": true,
+  "characteristics": {
+    "Цвет": "Черный",
+    "Вес": "1.5 кг",
+    "Размер": "10x20x30 см"
+  }
 }
 
 ### Обновление товара (для поставщика)
@@ -277,7 +251,12 @@ Content-Type: application/json
   "price": 99.99,
   "category": 1,
   "stock": 150,
-  "is_active": true
+  "is_active": true,
+  "characteristics": {
+    "Цвет": "Красный",
+    "Вес": "2 кг",
+    "Размер": "15x25x35 см"
+  }
 }
 
 ### Удаление товара (для поставщика)
@@ -301,11 +280,6 @@ Content-Type: application/json
     }
   ]
 }
-
-### Переключение статуса приема заказов (для поставщика)
-POST {{baseUrl}}/supplier/products/toggle_accepting_orders/
-Authorization: Token {{token}}
-Content-Type: application/json
 
 ### Получение заказов с товарами поставщика (исключая отмененные)
 GET {{baseUrl}}/supplier/products/orders/
