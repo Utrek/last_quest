@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Order, CartItem
 from .serializers import OrderSerializer
-from .async_email import send_order_confirmation_email_async
+from .email_utils import send_order_confirmation_email_async
 
 class OrderConfirmationView(viewsets.ViewSet):
     """
@@ -96,7 +96,7 @@ class OrderConfirmationView(viewsets.ViewSet):
         email_sent = send_order_confirmation_email_async(order)
         
         # Отправляем уведомление поставщикам
-        from .async_email import send_supplier_order_notification_async
+        from .email_utils import send_supplier_order_notification_async
         supplier_email_sent = send_supplier_order_notification_async(order)
         
         return Response({

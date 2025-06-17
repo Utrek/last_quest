@@ -23,7 +23,7 @@ class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        from .async_email import send_registration_confirmation_email_async
+        from .email_utils import send_registration_confirmation_email_async
         
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -464,7 +464,7 @@ class CartViewSet(viewsets.ModelViewSet):
         order.save()
         
         # Отправляем email с подтверждением заказа асинхронно
-        from .async_email import send_order_confirmation_email_async, send_supplier_order_notification_async
+        from .email_utils import send_order_confirmation_email_async, send_supplier_order_notification_async
         email_sent = send_order_confirmation_email_async(order)
         
         # Отправляем уведомление поставщикам
