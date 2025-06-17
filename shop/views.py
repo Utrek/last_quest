@@ -267,13 +267,19 @@ class SupplierViewSet(viewsets.ModelViewSet):
         """
         from .utils import export_products_to_yaml
         from django.http import HttpResponse
+        import re
         
         try:
             supplier = Supplier.objects.get(user=self.request.user)
             yaml_data = export_products_to_yaml(supplier)
             
+            # Создаем безопасное имя файла из названия компании или имени пользователя
+            company_name = supplier.user.company_name or supplier.user.username
+            safe_filename = re.sub(r'[^\w\-_\.]', '_', company_name)
+            filename = f"{safe_filename}_products.yaml"
+            
             response = HttpResponse(yaml_data, content_type='application/x-yaml')
-            response['Content-Disposition'] = 'attachment; filename="products_export.yaml"'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
         except Supplier.DoesNotExist:
             return Response({"error": "Supplier profile not found"}, status=status.HTTP_404_NOT_FOUND)

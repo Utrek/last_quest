@@ -281,6 +281,20 @@ Content-Type: application/json
   ]
 }
 
+### Импорт товаров из YAML файла (использует shop1.yaml)
+POST {{baseUrl}}/supplier/products/import_products/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Экспорт товаров в YAML формат (скачивание файла)
+GET {{baseUrl}}/supplier/products/export_products/
+Authorization: Token {{token}}
+
+### Экспорт товаров в файл на сервере (с именем поставщика)
+POST {{baseUrl}}/supplier/export/export_to_file/
+Authorization: Token {{token}}
+Content-Type: application/json
+
 ### Получение заказов с товарами поставщика (исключая отмененные)
 GET {{baseUrl}}/supplier/products/orders/
 Authorization: Token {{token}}

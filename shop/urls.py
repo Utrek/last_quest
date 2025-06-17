@@ -45,6 +45,10 @@ router.register(r'addresses', DeliveryAddressViewSet, basename='addresses')
 from .views_order import OrderConfirmationView
 router.register(r'order-confirmation', OrderConfirmationView, basename='order-confirmation')
 
+# Импортируем ViewSet для экспорта товаров поставщика
+from .views_supplier import SupplierExportViewSet
+router.register(r'supplier/export', SupplierExportViewSet, basename='supplier-export')
+
 urlpatterns = [
     path('api/test/', api_test, name='api-test'),
     path('api/categories/', list_categories, name='list-categories'),
@@ -55,4 +59,11 @@ urlpatterns = [
     path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset'),
     path('api/password-reset-confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
 ]
+
+# Добавляем URL для доступа к медиа-файлам в режиме разработки
+from django.conf import settings
+from django.conf.urls.static import static
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
