@@ -10,10 +10,11 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q
-from .models import Product, Order, OrderItem, Supplier, CartItem
+from .models import Product, Order, OrderItem, Supplier, CartItem, DeliveryAddress
 from .serializers import (
     RegisterSerializer, LoginSerializer, UserSerializer, ProductSerializer, OrderSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CartItemSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CartItemSerializer,
+    DeliveryAddressSerializer
 )
 
 User = get_user_model()
@@ -22,13 +23,20 @@ class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        from .email_utils import send_registration_confirmation_email
+        
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             token, created = Token.objects.get_or_create(user=user)
+            
+            # Отправляем email с подтверждением регистрации
+            email_sent = send_registration_confirmation_email(user)
+            
             return Response({
                 'token': token.key,
-                'user': UserSerializer(user).data
+                'user': UserSerializer(user).data,
+                'email_sent': email_sent
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -328,6 +336,25 @@ class CartViewSet(viewsets.ModelViewSet):
         if not cart_items.exists():
             return Response({"error": "Корзина пуста"}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Проверяем наличие адреса доставки
+        delivery_address_id = request.data.get('delivery_address_id')
+        delivery_address = None
+        
+        if delivery_address_id:
+            try:
+                delivery_address = DeliveryAddress.objects.get(id=delivery_address_id, user=request.user)
+            except DeliveryAddress.DoesNotExist:
+                return Response({"error": "Адрес доставки не найден"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Пробуем найти адрес по умолчанию
+            delivery_address = DeliveryAddress.objects.filter(user=request.user, is_default=True).first()
+            
+            if not delivery_address:
+                return Response({
+                    "error": "Не указан адрес доставки",
+                    "message": "Укажите адрес доставки или создайте новый"
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
         # Проверяем наличие товаров на складе
         insufficient_items = []
         for cart_item in cart_items:
@@ -356,6 +383,7 @@ class CartViewSet(viewsets.ModelViewSet):
         # Создаем заказ
         order = Order.objects.create(
             user=request.user,
+            delivery_address=delivery_address,
             status='pending',
             total_amount=0
         )

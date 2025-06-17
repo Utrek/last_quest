@@ -37,6 +37,10 @@ router.register(r'products', views.ProductViewSet, basename='products')
 router.register(r'cart', views.CartViewSet, basename='cart')
 router.register(r'orders', views.OrderViewSet, basename='orders')
 
+# Импортируем ViewSet для адресов доставки
+from .views_address import DeliveryAddressViewSet
+router.register(r'addresses', DeliveryAddressViewSet, basename='addresses')
+
 urlpatterns = [
     path('api/test/', api_test, name='api-test'),
     path('api/categories/', list_categories, name='list-categories'),

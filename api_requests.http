@@ -41,14 +41,15 @@ Content-Type: application/json
   "address": "Test Address",
   "user_type": "customer"
 }
+
 ### Вход в систему 
 POST {{baseUrl}}/login/
 Content-Type: application/json
 
 {
   "username": "testuser3",
-  "password": "securepassword123"}
-
+  "password": "securepassword123"
+}
 
 ### Запрос на сброс пароля
 POST {{baseUrl}}/password-reset/
@@ -67,6 +68,74 @@ Content-Type: application/json
   "password": "newpassword123",
   "password2": "newpassword123"
 }
+
+### УПРАВЛЕНИЕ АДРЕСАМИ ДОСТАВКИ ###
+
+### Получение списка адресов доставки
+GET {{baseUrl}}/addresses/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Создание адреса доставки
+POST {{baseUrl}}/addresses/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "name": "Дом",
+  "recipient_name": "Иван Иванов",
+  "phone": "+79001234567",
+  "address": "ул. Примерная, д. 1, кв. 1",
+  "city": "Москва",
+  "postal_code": "123456",
+  "is_default": true
+}
+
+### Создание второго адреса доставки
+POST {{baseUrl}}/addresses/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "name": "Работа",
+  "recipient_name": "Иван Иванов",
+  "phone": "+79001234567",
+  "address": "ул. Рабочая, д. 10, офис 101",
+  "city": "Москва",
+  "postal_code": "654321",
+  "is_default": false
+}
+
+### Получение информации об адресе доставки
+GET {{baseUrl}}/addresses/1/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Обновление адреса доставки
+PUT {{baseUrl}}/addresses/1/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "name": "Дом",
+  "recipient_name": "Иван Иванов",
+  "phone": "+79001234567",
+  "address": "ул. Примерная, д. 1, кв. 2",
+  "city": "Москва",
+  "postal_code": "123456",
+  "is_default": true
+}
+
+### Установка адреса доставки по умолчанию
+POST {{baseUrl}}/addresses/2/set_default/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Удаление адреса доставки
+DELETE {{baseUrl}}/addresses/2/
+Authorization: Token {{token}}
+
+### РАБОТА С КОРЗИНОЙ И ЗАКАЗАМИ ###
 
 ### Получение списка продуктов
 GET {{baseUrl}}/products/
@@ -126,10 +195,14 @@ Content-Type: application/json
   "product": 5
 }
 
-### Оформление заказа
+### Оформление заказа с указанием адреса доставки
 POST {{baseUrl}}/cart/checkout/
 Authorization: Token {{token}}
 Content-Type: application/json
+
+{
+  "delivery_address_id": 1
+}
 
 ### Получение списка заказов пользователя
 GET {{baseUrl}}/orders/
@@ -173,7 +246,6 @@ Content-Type: application/json
   "username": "supplier1",
   "password": "securepassword123"
 }
-
 
 ### Получение списка своих товаров (для поставщика)
 GET {{baseUrl}}/supplier/products/
@@ -229,15 +301,6 @@ Content-Type: application/json
     }
   ]
 }
-
-### Импорт товаров из YAML файла (использует shop1.yaml)
-POST {{baseUrl}}/supplier/products/import_products/
-Authorization: Token {{token}}
-Content-Type: application/json
-
-### Экспорт товаров в YAML формат
-GET {{baseUrl}}/supplier/products/export_products/
-Authorization: Token {{token}}
 
 ### Переключение статуса приема заказов (для поставщика)
 POST {{baseUrl}}/supplier/products/toggle_accepting_orders/

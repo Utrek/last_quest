@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Подтверждение регистрации</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Подтверждение регистрации</h1>
+        </div>
+        
+        <p>Здравствуйте, {{ user.first_name }} {{ user.last_name }}!</p>
+        
+        <p>Спасибо за регистрацию в нашем интернет-магазине. Ваша учетная запись успешно создана.</p>
+        
+        <p>Данные вашей учетной записи:</p>
+        <ul>
+            <li><strong>Имя пользователя:</strong> {{ user.username }}</li>
+            <li><strong>Email:</strong> {{ user.email }}</li>
+        </ul>
+        
+        <p>Теперь вы можете войти в систему и начать совершать покупки.</p>
+        
+        <div class="footer">
+            <p>С уважением, команда интернет-магазина</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -94,57 +94,6 @@ class Product(models.Model):
         return product
 
 
-class Order(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'Ожидание'),
-        ('processing', 'В обработке'),
-        ('shipped', 'Отправлен'),
-        ('delivered', 'Доставлен'),
-        ('cancelled', 'Отменен'),
-    )
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
-    def __str__(self):
-        return f"Заказ #{self.id} от {self.user.username}"
-        
-    def get_status_display(self):
-        """Возвращает отображаемое значение статуса"""
-        return dict(self.STATUS_CHOICES).get(self.status, self.status)
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # Цена на момент заказа
-    
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
-    
-    def save(self, *args, **kwargs):
-        # Сохраняем цену товара на момент заказа
-        if not self.price:
-            self.price = self.product.price
-        super().save(*args, **kwargs)
-
-class CartItem(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ('user', 'product')
-    
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name} в корзине {self.user.username}"
-
-
 class DeliveryAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='delivery_addresses')
     name = models.CharField(max_length=100, help_text="Название адреса (например, 'Дом', 'Работа')")
@@ -169,3 +118,56 @@ class DeliveryAddress(models.Model):
             self.is_default = True
         super().save(*args, **kwargs)
 
+
+class Order(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Ожидание'),
+        ('processing', 'В обработке'),
+        ('shipped', 'Отправлен'),
+        ('delivered', 'Доставлен'),
+        ('cancelled', 'Отменен'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    delivery_address = models.ForeignKey(DeliveryAddress, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    def __str__(self):
+        return f"Заказ #{self.id} от {self.user.username}"
+        
+    def get_status_display(self):
+        """Возвращает отображаемое значение статуса"""
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # Цена на момент заказа
+    
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+    
+    def save(self, *args, **kwargs):
+        # Сохраняем цену товара на момент заказа
+        if not self.price:
+            self.price = self.product.price
+        super().save(*args, **kwargs)
+
+
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('user', 'product')
+    
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} в корзине {self.user.username}"

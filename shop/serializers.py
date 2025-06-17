@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
-from .models import Product, Order, OrderItem, Supplier, Category, CartItem
+from .models import Product, Order, OrderItem, Supplier, Category, CartItem, DeliveryAddress
 
 User = get_user_model()
 
@@ -72,13 +72,27 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ('id', 'product', 'product_name', 'quantity', 'price')
 
+class DeliveryAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryAddress
+        fields = ('id', 'name', 'recipient_name', 'phone', 'address', 'city', 'postal_code', 'is_default')
+        read_only_fields = ('user',)
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     status_display = serializers.SerializerMethodField()
+    delivery_address = DeliveryAddressSerializer(read_only=True)
+    delivery_address_id = serializers.PrimaryKeyRelatedField(
+        queryset=DeliveryAddress.objects.all(), 
+        source='delivery_address',
+        write_only=True,
+        required=False
+    )
     
     class Meta:
         model = Order
-        fields = ('id', 'user', 'created_at', 'updated_at', 'status', 'status_display', 'total_amount', 'items')
+        fields = ('id', 'user', 'delivery_address', 'delivery_address_id', 'created_at', 'updated_at', 'status', 'status_display', 'total_amount', 'items')
+        read_only_fields = ('user', 'created_at', 'updated_at', 'total_amount')
     
     def get_status_display(self, obj):
         status_map = {
@@ -89,6 +103,15 @@ class OrderSerializer(serializers.ModelSerializer):
             'cancelled': 'Отменен'
         }
         return status_map.get(obj.status, obj.status)
+        
+    def validate_delivery_address_id(self, value):
+        """
+        Проверяем, что адрес доставки принадлежит пользователю
+        """
+        request = self.context.get('request')
+        if request and value.user != request.user:
+            raise serializers.ValidationError("Этот адрес доставки не принадлежит вам")
+        return value
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
