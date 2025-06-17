@@ -23,15 +23,15 @@ class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        from .email_utils import send_registration_confirmation_email
+        from .async_email import send_registration_confirmation_email_async
         
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             token, created = Token.objects.get_or_create(user=user)
             
-            # Отправляем email с подтверждением регистрации
-            email_sent = send_registration_confirmation_email(user)
+            # Отправляем email с подтверждением регистрации асинхронно
+            email_sent = send_registration_confirmation_email_async(user)
             
             return Response({
                 'token': token.key,
@@ -125,6 +125,10 @@ class IsSupplier(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and hasattr(request.user, 'is_supplier') and request.user.is_supplier()
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
+
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API для просмотра продуктов всеми пользователями
@@ -132,8 +136,17 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
     
+    @method_decorator(cache_page(60*15))  # Кэширование на 15 минут
+    @method_decorator(vary_on_cookie)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @method_decorator(cache_page(60*60))  # Кэширование на 1 час
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+    
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
+        queryset = Product.objects.filter(is_active=True).select_related('category', 'supplier')
         
         # Фильтрация по категории
         category = self.request.query_params.get('category', None)
@@ -439,8 +452,9 @@ class CartViewSet(viewsets.ModelViewSet):
         order.total_amount = total
         order.save()
         
-        # Отправляем email с подтверждением заказа
-        email_sent = send_order_confirmation_email(order)
+        # Отправляем email с подтверждением заказа асинхронно
+        from .async_email import send_order_confirmation_email_async
+        email_sent = send_order_confirmation_email_async(order)
         
         return Response({
             "message": "Заказ успешно оформлен" + (" (частично)" if partial else ""),
@@ -455,7 +469,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+        return Order.objects.filter(user=self.request.user).select_related('delivery_address').prefetch_related(
+            Prefetch('items', queryset=OrderItem.objects.select_related('product'))
+        ).order_by('-created_at')
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
