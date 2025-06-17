@@ -183,7 +183,13 @@ class SupplierViewSet(viewsets.ModelViewSet):
             # Получаем заказы, содержащие товары этого поставщика
             supplier_products = Product.objects.filter(supplier=supplier)
             order_items = OrderItem.objects.filter(product__in=supplier_products)
-            orders = Order.objects.filter(id__in=order_items.values_list('order', flat=True)).distinct()
+            
+            # Исключаем отмененные заказы
+            orders = Order.objects.filter(
+                id__in=order_items.values_list('order', flat=True)
+            ).exclude(
+                status='cancelled'
+            ).distinct()
             
             serializer = OrderSerializer(orders, many=True)
             return Response(serializer.data)
@@ -213,6 +219,40 @@ class SupplierViewSet(viewsets.ModelViewSet):
             return Response({'updated_products': updated_products})
         except Supplier.DoesNotExist:
             return Response({"error": "Supplier profile not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+    @action(detail=False, methods=['post'])
+    def import_products(self, request):
+        """
+        Импорт товаров из YAML файла
+        """
+        from .simple_import import simple_import_from_yaml
+        
+        result = simple_import_from_yaml(self.request.user)
+        
+        if "error" in result:
+            return Response({"error": result["error"]}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(result)
+            
+    @action(detail=False, methods=['get'])
+    def export_products(self, request):
+        """
+        Экспорт товаров в YAML формат
+        """
+        from .utils import export_products_to_yaml
+        from django.http import HttpResponse
+        
+        try:
+            supplier = Supplier.objects.get(user=self.request.user)
+            yaml_data = export_products_to_yaml(supplier)
+            
+            response = HttpResponse(yaml_data, content_type='application/x-yaml')
+            response['Content-Disposition'] = 'attachment; filename="products_export.yaml"'
+            return response
+        except Supplier.DoesNotExist:
+            return Response({"error": "Supplier profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class CartViewSet(viewsets.ModelViewSet):
     """
@@ -252,9 +292,37 @@ class CartViewSet(viewsets.ModelViewSet):
                 {"error": f"Товар с ID {product_id} не найден в корзине"}, 
                 status=status.HTTP_404_NOT_FOUND
             )
+            
+    @action(detail=False, methods=['post'])
+    def remove_product(self, request):
+        """
+        Удаление товара из корзины по ID продукта
+        """
+        product_id = request.data.get('product')
+        
+        if not product_id:
+            return Response(
+                {"error": "Необходимо указать product"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            cart_item = CartItem.objects.get(user=request.user, product_id=product_id)
+            cart_item.delete()
+            return Response(
+                {"success": f"Товар с ID {product_id} удален из корзины"},
+                status=status.HTTP_200_OK
+            )
+        except CartItem.DoesNotExist:
+            return Response(
+                {"error": f"Товар с ID {product_id} не найден в корзине"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     @action(detail=False, methods=['post'])
     def checkout(self, request):
+        from .email_utils import send_order_confirmation_email
+        
         cart_items = CartItem.objects.filter(user=request.user)
         
         if not cart_items.exists():
@@ -343,8 +411,12 @@ class CartViewSet(viewsets.ModelViewSet):
         order.total_amount = total
         order.save()
         
+        # Отправляем email с подтверждением заказа
+        email_sent = send_order_confirmation_email(order)
+        
         return Response({
             "message": "Заказ успешно оформлен" + (" (частично)" if partial else ""),
+            "email_sent": email_sent,
             "order": OrderSerializer(order).data
         }, status=status.HTTP_201_CREATED)
 class OrderViewSet(viewsets.ModelViewSet):

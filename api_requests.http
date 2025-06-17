@@ -1,6 +1,6 @@
 ### Переменные
 @baseUrl = http://localhost:8000/api
-@token = 8e5c6e14b510b8d48cfc5848f61a9ea7d48a688b
+@token = 9aa1e903676499dfe1f65817ad90f65cfbabd979
 
 ### Тестовый эндпоинт
 GET {{baseUrl}}/test/
@@ -14,7 +14,7 @@ POST {{baseUrl}}/categories/create/
 Content-Type: application/json
 
 {
-  "name": "Электроника"
+  "name": "Игрушки"
 }
 
 ### Вход суперпользователя
@@ -31,8 +31,8 @@ POST {{baseUrl}}/register/
 Content-Type: application/json
 
 {
-  "username": "testuser",
-  "email": "test@example.com",
+  "username": "testuser3",
+  "email": "test1@example.com",
   "password": "securepassword123",
   "password2": "securepassword123",
   "first_name": "Test",
@@ -46,34 +46,9 @@ POST {{baseUrl}}/login/
 Content-Type: application/json
 
 {
-  "username": "testuser",
+  "username": "testuser3",
   "password": "securepassword123"}
 
-### Регистрация нового поставщика
-POST {{baseUrl}}/register/
-Content-Type: application/json
-
-{
-  "username": "supplier3",
-  "email": "supplier@exam3ple.com",
-  "password": "securepassword123",
-  "password2": "securepassword123",
-  "first_name": "Supplier",
-  "last_name": "User",
-  "phone": "+79009876543",
-  "address": "Supplier Address",
-  "user_type": "supplier",
-  "company_name": "Test Company"
-}
-
-### Вход в систему поставщика
-POST {{baseUrl}}/login/
-Content-Type: application/json
-
-{
-  "username": "supplier1",
-  "password": "securepassword123"
-}
 
 ### Запрос на сброс пароля
 POST {{baseUrl}}/password-reset/
@@ -124,8 +99,8 @@ Authorization: Token {{token}}
 Content-Type: application/json
 
 {
-  "product": 6,
-  "quantity": 2
+  "product": 5,
+  "quantity": 4
 }
 
 ### Изменение количества товара в корзине
@@ -134,13 +109,22 @@ Authorization: Token {{token}}
 Content-Type: application/json
 
 {
-  "product": 3,
-  "quantity": 5
+  "product": 5,
+  "quantity": 2
 }
 
-### Удаление товара из корзины
-DELETE {{baseUrl}}/cart/3/
+### Удаление товара из корзины по ID элемента корзины
+DELETE {{baseUrl}}/cart/8/
 Authorization: Token {{token}}
+
+### Удаление товара из корзины по ID продукта
+POST {{baseUrl}}/cart/remove_product/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+{
+  "product": 5
+}
 
 ### Оформление заказа
 POST {{baseUrl}}/cart/checkout/
@@ -153,7 +137,7 @@ Authorization: Token {{token}}
 Content-Type: application/json
 
 ### Получение информации о конкретном заказе
-GET {{baseUrl}}/orders/2/
+GET {{baseUrl}}/orders/3/
 Authorization: Token {{token}}
 Content-Type: application/json
 
@@ -162,25 +146,34 @@ POST {{baseUrl}}/orders/2/cancel/
 Authorization: Token {{token}}
 Content-Type: application/json
 
-### Попытка изменить отмененный заказ
-PUT {{baseUrl}}/orders/2/
-Authorization: Token {{token}}
-Content-Type: application/json
-
-{
-  "status": "pending"
-}
-
-### Попытка частично изменить отмененный заказ
-PATCH {{baseUrl}}/orders/2/
-Authorization: Token {{token}}
-Content-Type: application/json
-
-{
-  "status": "pending"
-}
-
 ### ЗАПРОСЫ ДЛЯ ПОСТАВЩИКА ###
+
+### Регистрация нового поставщика
+POST {{baseUrl}}/register/
+Content-Type: application/json
+
+{
+  "username": "supplier3",
+  "email": "supplier@exam3ple.com",
+  "password": "securepassword123",
+  "password2": "securepassword123",
+  "first_name": "Supplier",
+  "last_name": "User",
+  "phone": "+79009876543",
+  "address": "Supplier Address",
+  "user_type": "supplier",
+  "company_name": "Test Company"
+}
+
+### Вход в систему поставщика
+POST {{baseUrl}}/login/
+Content-Type: application/json
+
+{
+  "username": "supplier1",
+  "password": "securepassword123"
+}
+
 
 ### Получение списка своих товаров (для поставщика)
 GET {{baseUrl}}/supplier/products/
@@ -193,7 +186,7 @@ Authorization: Token {{token}}
 Content-Type: application/json
 
 {
-  "name": "Новый товар3",
+  "name": "Новый товар34",
   "description": "Описание нового товара",
   "price": 999.99,
   "category": 1,
@@ -202,21 +195,21 @@ Content-Type: application/json
 }
 
 ### Обновление товара (для поставщика)
-PUT {{baseUrl}}/supplier/products/1/
+PUT {{baseUrl}}/supplier/products/10/
 Authorization: Token {{token}}
 Content-Type: application/json
 
 {
   "name": "Обновленный товар",
   "description": "Обновленное описание товара",
-  "price": 1099.99,
+  "price": 99.99,
   "category": 1,
   "stock": 150,
   "is_active": true
 }
 
 ### Удаление товара (для поставщика)
-DELETE {{baseUrl}}/supplier/products/1/
+DELETE {{baseUrl}}/supplier/products/10/
 Authorization: Token {{token}}
 
 ### Обновление цен на товары (для поставщика)
@@ -237,12 +230,21 @@ Content-Type: application/json
   ]
 }
 
+### Импорт товаров из YAML файла (использует shop1.yaml)
+POST {{baseUrl}}/supplier/products/import_products/
+Authorization: Token {{token}}
+Content-Type: application/json
+
+### Экспорт товаров в YAML формат
+GET {{baseUrl}}/supplier/products/export_products/
+Authorization: Token {{token}}
+
 ### Переключение статуса приема заказов (для поставщика)
 POST {{baseUrl}}/supplier/products/toggle_accepting_orders/
 Authorization: Token {{token}}
 Content-Type: application/json
 
-### Получение заказов с товарами поставщика
+### Получение заказов с товарами поставщика (исключая отмененные)
 GET {{baseUrl}}/supplier/products/orders/
 Authorization: Token {{token}}
 Content-Type: application/json

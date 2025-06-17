@@ -1,0 +1,21 @@
+Подтверждение заказа
+
+Здравствуйте, {{ order.user.first_name }} {{ order.user.last_name }}!
+
+Спасибо за ваш заказ. Ниже приведены детали вашего заказа:
+
+Номер заказа: {{ order.id }}
+Дата заказа: {{ order.created_at|date:"d.m.Y H:i" }}
+Статус заказа: {{ order.get_status_display }}
+
+Товары в заказе:
+{% for item in order.items.all %}
+- {{ item.product.name }} x {{ item.quantity }} = {{ item.price }} руб.
+{% endfor %}
+
+Итого: {{ order.total_amount }} руб.
+
+Если у вас возникли вопросы по заказу, пожалуйста, свяжитесь с нами.
+
+С уважением,
+Команда интернет-магазина

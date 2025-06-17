@@ -43,9 +43,55 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    sku = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="Уникальный идентификатор товара")
     
     def __str__(self):
         return self.name
+        
+    def to_dict(self):
+        """Преобразует объект товара в словарь для экспорта"""
+        return {
+            'sku': self.sku,
+            'name': self.name,
+            'description': self.description,
+            'price': float(self.price),
+            'category': self.category.name if self.category else None,
+            'stock': self.stock,
+            'is_active': self.is_active,
+            'supplier': self.supplier.user.username
+        }
+        
+    @classmethod
+    def from_dict(cls, data, supplier):
+        """Создает или обновляет товар из словаря"""
+        category, _ = Category.objects.get_or_create(name=data.get('category', 'Без категории'))
+        
+        # Ищем товар по SKU или создаем новый
+        if data.get('sku'):
+            product, created = cls.objects.update_or_create(
+                sku=data['sku'],
+                defaults={
+                    'name': data['name'],
+                    'description': data.get('description', ''),
+                    'price': data['price'],
+                    'supplier': supplier,
+                    'category': category,
+                    'stock': data.get('stock', 0),
+                    'is_active': data.get('is_active', True)
+                }
+            )
+        else:
+            product = cls.objects.create(
+                name=data['name'],
+                description=data.get('description', ''),
+                price=data['price'],
+                supplier=supplier,
+                category=category,
+                stock=data.get('stock', 0),
+                is_active=data.get('is_active', True)
+            )
+        
+        return product
 
 
 class Order(models.Model):
@@ -65,6 +111,10 @@ class Order(models.Model):
     
     def __str__(self):
         return f"Заказ #{self.id} от {self.user.username}"
+        
+    def get_status_display(self):
+        """Возвращает отображаемое значение статуса"""
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -94,4 +144,28 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name} в корзине {self.user.username}"
 
+
+class DeliveryAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='delivery_addresses')
+    name = models.CharField(max_length=100, help_text="Название адреса (например, 'Дом', 'Работа')")
+    recipient_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    address = models.TextField()
+    city = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.name}: {self.address}, {self.city}"
+    
+    def save(self, *args, **kwargs):
+        # Если этот адрес установлен как адрес по умолчанию, сбрасываем флаг у других адресов
+        if self.is_default:
+            DeliveryAddress.objects.filter(user=self.user, is_default=True).update(is_default=False)
+        # Если это первый адрес пользователя, устанавливаем его как адрес по умолчанию
+        elif not self.pk and not DeliveryAddress.objects.filter(user=self.user).exists():
+            self.is_default = True
+        super().save(*args, **kwargs)
 

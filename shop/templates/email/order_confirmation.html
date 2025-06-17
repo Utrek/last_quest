@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Подтверждение заказа</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .order-details {
+            margin: 20px 0;
+        }
+        .order-items {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .order-items th, .order-items td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .total {
+            margin-top: 20px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Подтверждение заказа</h1>
+        </div>
+        
+        <p>Здравствуйте, {{ order.user.first_name }} {{ order.user.last_name }}!</p>
+        
+        <p>Спасибо за ваш заказ. Ниже приведены детали вашего заказа:</p>
+        
+        <div class="order-details">
+            <p><strong>Номер заказа:</strong> {{ order.id }}</p>
+            <p><strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+            <p><strong>Статус заказа:</strong> {{ order.get_status_display }}</p>
+        </div>
+        
+        <h3>Товары в заказе:</h3>
+        <table class="order-items">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Количество</th>
+                    <th>Цена</th>
+                    <th>Сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.price }} руб.</td>
+                    <td>{{ item.price|floatformat:2 }} руб.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="total">
+            <p>Итого: {{ order.total_amount }} руб.</p>
+        </div>
+        
+        <p>Если у вас возникли вопросы по заказу, пожалуйста, свяжитесь с нами.</p>
+        
+        <div class="footer">
+            <p>С уважением, команда интернет-магазина</p>
+        </div>
+    </div>
+</body>
+</html>
