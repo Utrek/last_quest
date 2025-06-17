@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .form-row {
+            margin-bottom: 15px;
+        }
+        .form-row label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-row select, .form-row input {
+            width: 100%;
+            padding: 5px;
+        }
+        .submit-row {
+            margin-top: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='shop' %}">Shop</a>
+    &rsaquo; <a href="{% url 'admin:shop_product_changelist' %}">Products</a>
+    &rsaquo; {% trans 'Import Products' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% trans 'Import Products from YAML' %}</h1>
+    
+    <div class="module">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <label for="supplier">{% trans 'Supplier' %}:</label>
+                <select name="supplier" id="supplier" required>
+                    <option value="">{% trans '-- Select Supplier --' %}</option>
+                    {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}">{{ supplier }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="yaml_file">{% trans 'YAML File' %}:</label>
+                <input type="file" name="yaml_file" id="yaml_file" accept=".yaml,.yml" required>
+            </div>
+            
+            <div class="submit-row">
+                <input type="submit" value="{% trans 'Import' %}" class="default">
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

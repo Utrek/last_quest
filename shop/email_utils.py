@@ -78,34 +78,18 @@ def send_order_confirmation_email(order: Order) -> bool:
 
 def send_order_confirmation_email_async(order: Order) -> bool:
     """
-    Асинхронно отправляет email с подтверждением заказа
+    Асинхронно отправляет email с подтверждением заказа через Celery
     
     Args:
         order: объект Order
         
     Returns:
-        bool: True если email отправлен успешно, иначе False
+        bool: True если задача запущена успешно, иначе False
     """
-    # Проверяем, что у пользователя есть email
-    if not order.user.email:
-        return False
+    from .tasks import send_order_confirmation_email
     
-    # Подготавливаем контекст для шаблона
-    context = {
-        'order': order
-    }
-    
-    # Рендерим HTML и текстовую версии письма
-    html_content = render_to_string('email/order_confirmation.html', context)
-    text_content = render_to_string('email/order_confirmation.txt', context)
-    
-    # Создаем email
-    subject = f'Подтверждение заказа #{order.id}'
-    from_email = settings.DEFAULT_FROM_EMAIL
-    to_email = order.user.email
-    
-    # Отправляем асинхронно
-    send_async_email(subject, text_content, from_email, [to_email], html_content)
+    # Запускаем задачу Celery
+    send_order_confirmation_email.delay(order.id)
     return True
 
 def send_registration_confirmation_email(user: User) -> bool:
@@ -181,57 +165,16 @@ def send_registration_confirmation_email_async(user: User) -> bool:
 
 def send_supplier_order_notification_async(order: Order) -> bool:
     """
-    Асинхронно отправляет уведомление поставщикам о новом заказе
+    Асинхронно отправляет уведомление поставщикам о новом заказе через Celery
     
     Args:
         order: объект Order
         
     Returns:
-        bool: True если email отправлен успешно, иначе False
+        bool: True если задача запущена успешно, иначе False
     """
-    from .models import Supplier
+    from .tasks import send_supplier_order_notification
     
-    # Получаем все элементы заказа
-    order_items = order.items.all().select_related('product', 'product__supplier', 'product__supplier__user')
-    
-    # Группируем товары по поставщикам
-    suppliers_items = {}
-    for item in order_items:
-        supplier = item.product.supplier
-        if supplier not in suppliers_items:
-            suppliers_items[supplier] = []
-        
-        # Добавляем свойство total_price для шаблона
-        item.total_price = item.quantity * item.price
-        suppliers_items[supplier].append(item)
-    
-    # Отправляем уведомление каждому поставщику
-    for supplier, items in suppliers_items.items():
-        # Проверяем, что у поставщика есть email
-        if not supplier.user.email:
-            continue
-        
-        # Считаем общую сумму товаров этого поставщика
-        total_amount = sum(item.total_price for item in items)
-        
-        # Подготавливаем контекст для шаблона
-        context = {
-            'order': order,
-            'supplier': supplier,
-            'supplier_items': items,
-            'total_amount': total_amount
-        }
-        
-        # Рендерим HTML и текстовую версии письма
-        html_content = render_to_string('email/supplier_order_notification.html', context)
-        text_content = render_to_string('email/supplier_order_notification.txt', context)
-        
-        # Создаем email
-        subject = f'Новый заказ #{order.id} для исполнения'
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = supplier.user.email
-        
-        # Отправляем асинхронно
-        send_async_email(subject, text_content, from_email, [to_email], html_content)
-    
+    # Запускаем задачу Celery
+    send_supplier_order_notification.delay(order.id)
     return True

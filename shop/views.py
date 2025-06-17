@@ -249,16 +249,30 @@ class SupplierViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def import_products(self, request):
         """
-        Импорт товаров из YAML файла
+        Импорт товаров из YAML файла через Celery
         """
-        from .simple_import import simple_import_from_yaml
+        from .tasks import do_import
         
-        result = simple_import_from_yaml(self.request.user)
-        
-        if "error" in result:
-            return Response({"error": result["error"]}, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response(result)
+        try:
+            supplier = Supplier.objects.get(user=self.request.user)
+            
+            # Получаем YAML данные из запроса
+            yaml_data = request.data.get('yaml_data')
+            
+            if not yaml_data:
+                return Response({"error": "YAML data is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Запускаем задачу импорта асинхронно
+            task = do_import.delay(supplier.id, yaml_data=yaml_data)
+            
+            return Response({
+                "message": "Import task started",
+                "task_id": task.id
+            })
+        except Supplier.DoesNotExist:
+            return Response({"error": "Supplier profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             
     @action(detail=False, methods=['get'])
     def export_products(self, request):

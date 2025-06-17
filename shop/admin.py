@@ -1,9 +1,11 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import path
 from .models import (
     User, Supplier, Category, Product, Order, OrderItem, 
     CartItem, DeliveryAddress
 )
+from .admin_views import get_admin_urls, ImportProductsView
 
 class SupplierAdmin(admin.ModelAdmin):
     list_display = ('user', 'company_name', 'description')
@@ -34,7 +36,18 @@ class ProductAdmin(admin.ModelAdmin):
         ('Изображение', {
             'fields': ('image', 'image_preview')
         }),
+        ('Характеристики', {
+            'fields': ('characteristics',)
+        }),
     )
+    
+    # Добавляем кнопку импорта в админку
+    change_list_template = 'admin/shop/product_change_list.html'
+    
+    # Переопределяем get_urls для добавления URL-шаблонов
+    def get_urls(self):
+        urls = super().get_urls()
+        return get_admin_urls(urls)()
     
     def supplier_name(self, obj):
         return obj.supplier.user.company_name or obj.supplier.user.username
