@@ -17,3 +17,15 @@ pytest-django>=4.5.2
 pytest-cov>=4.1.0
 factory-boy>=3.2.1
 freezegun>=1.2.2
+
+# Документация
+drf-yasg>=1.21.7
+mkdocs>=1.5.3
+mkdocs-material>=9.4.6
+mkdocstrings>=0.23.0
+mkdocstrings-python>=1.7.0
+
+# Дополнительные зависимости
+coreapi>=2.3.3
+pyyaml>=6.0
+uritemplate>=4.1.1

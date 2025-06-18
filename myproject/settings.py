@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'shop',
     'django_celery_results',
+    'drf_yasg',
 ]
 
 
@@ -93,7 +94,8 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
         'user': '1000/day'
-    }
+    },
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
 SIMPLE_JWT = {
