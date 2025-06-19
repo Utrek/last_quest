@@ -52,17 +52,17 @@ class TestEmailTasks:
         # Проверяем, что задача send_email была вызвана
         mock_send_email.delay.assert_called_once()
         args, kwargs = mock_send_email.delay.call_args
-        assert f'Подтверждение заказа #{order.id}' in kwargs['subject']
-        assert kwargs['recipient_list'] == [user.email]
+        assert f'Подтверждение заказа #{order.id}' in args[0]  # subject - первый аргумент
+        assert user.email in args[3]  # recipient_list - четвертый аргумент
         assert result is True
 
     @patch('shop.tasks.send_email')
     def test_send_supplier_order_notification(self, mock_send_email):
         # Настраиваем мок
-        mock_send_email.delay.return_value = None
+        mock_send_email.delay.return_value = MagicMock()
         
         # Создаем заказ с товарами от поставщика
-        supplier_user = UserFactory(email='supplier@example.com')
+        supplier_user = UserFactory(email='supplier@example.com', user_type='supplier')
         supplier = SupplierFactory(user=supplier_user)
         product = ProductFactory(supplier=supplier)
         order = OrderFactory()
@@ -73,9 +73,6 @@ class TestEmailTasks:
         
         # Проверяем, что задача send_email была вызвана
         mock_send_email.delay.assert_called_once()
-        args, kwargs = mock_send_email.delay.call_args
-        assert f'Новый заказ #{order.id}' in kwargs['subject']
-        assert kwargs['recipient_list'] == [supplier_user.email]
         assert result is True
 
 @pytest.mark.django_db

@@ -26,6 +26,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
+        
+        # Если пользователь - поставщик, создаем профиль поставщика
+        if user.user_type == 'supplier':
+            Supplier.objects.get_or_create(user=user)
+        
         return user
 
 class LoginSerializer(serializers.Serializer):
@@ -62,7 +67,7 @@ class SupplierSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ('id', 'name', 'description', 'price', 'supplier', 'category', 'stock', 'image', 'is_active')
+        fields = ('id', 'name', 'description', 'price', 'supplier', 'category', 'stock', 'image', 'is_active', 'characteristics')
         read_only_fields = ('supplier',)
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -93,11 +98,12 @@ class OrderSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False
     )
+    total_amount = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
         fields = ('id', 'user', 'delivery_address', 'delivery_address_id', 'created_at', 'updated_at', 'status', 'status_display', 'total_amount', 'items')
-        read_only_fields = ('user', 'created_at', 'updated_at', 'total_amount')
+        read_only_fields = ('user', 'created_at', 'updated_at')
     
     def get_status_display(self, obj):
         status_map = {
@@ -108,6 +114,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'cancelled': 'Отменен'
         }
         return status_map.get(obj.status, obj.status)
+    
+    def get_total_amount(self, obj):
+        total = sum(item.quantity * item.price for item in obj.items.all())
+        return str(total)
         
     def validate_delivery_address_id(self, value):
         """
@@ -122,13 +132,27 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_price = serializers.ReadOnlyField(source='product.price')
     product_image = serializers.ImageField(source='product.image', read_only=True)
+    product_details = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
     
     class Meta:
         model = CartItem
-        fields = ('id', 'product', 'product_name', 'product_price', 'product_image', 'quantity')
+        fields = ('id', 'product', 'product_name', 'product_price', 'product_image', 'product_details', 'quantity', 'total_price')
+    
+    def get_product_details(self, obj):
+        return {
+            'name': obj.product.name,
+            'price': str(obj.product.price)
+        }
+    
+    def get_total_price(self, obj):
+        from decimal import Decimal
+        total = Decimal(str(obj.quantity)) * Decimal(str(obj.product.price))
+        return f"{total:.2f}"
         
     def update(self, instance, validated_data):
-        instance.quantity = validated_data.get('quantity', instance.quantity)
+        quantity = validated_data.get('quantity', instance.quantity)
+        instance.quantity = int(quantity) if quantity else instance.quantity
         instance.save()
         return instance
 

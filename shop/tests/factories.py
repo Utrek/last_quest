@@ -1,4 +1,5 @@
 import factory
+import uuid
 from django.contrib.auth import get_user_model
 from shop.models import (
     Supplier, Category, Product, DeliveryAddress, Order, OrderItem, CartItem
@@ -10,8 +11,9 @@ User = get_user_model()
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
+        skip_postgeneration_save = True
 
-    username = factory.Sequence(lambda n: f'user{n}')
+    username = factory.LazyFunction(lambda: f'user{uuid.uuid4().hex[:8]}')
     email = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
     password = factory.PostGenerationMethodCall('set_password', 'password123')
     first_name = factory.Faker('first_name')
@@ -19,7 +21,17 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_active = True
     user_type = 'customer'
 
-class SupplierUserFactory(UserFactory):
+class SupplierUserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = User
+        skip_postgeneration_save = True
+
+    username = factory.LazyFunction(lambda: f'supplier{uuid.uuid4().hex[:8]}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
+    password = factory.PostGenerationMethodCall('set_password', 'password123')
+    first_name = factory.Faker('first_name')
+    last_name = factory.Faker('last_name')
+    is_active = True
     user_type = 'supplier'
     company_name = factory.Faker('company')
 
@@ -29,6 +41,14 @@ class SupplierFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(SupplierUserFactory)
     description = factory.Faker('paragraph')
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        # Проверяем, существует ли уже Supplier для данного пользователя
+        user = kwargs.get('user')
+        if user and hasattr(user, 'supplier_profile'):
+            return user.supplier_profile
+        return super()._create(model_class, *args, **kwargs)
 
 class CategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -47,7 +67,7 @@ class ProductFactory(factory.django.DjangoModelFactory):
     category = factory.SubFactory(CategoryFactory)
     stock = 100
     is_active = True
-    sku = factory.Sequence(lambda n: f'SKU-{n}')
+    sku = factory.LazyFunction(lambda: f'SKU-{uuid.uuid4().hex[:8]}')
     characteristics = {'color': 'red', 'size': 'M', 'weight': '1kg'}
 
 class DeliveryAddressFactory(factory.django.DjangoModelFactory):
@@ -61,7 +81,7 @@ class DeliveryAddressFactory(factory.django.DjangoModelFactory):
     middle_name = factory.Faker('first_name')
     recipient_name = factory.LazyAttribute(lambda obj: f'{obj.first_name} {obj.last_name}')
     email = factory.Faker('email')
-    phone = factory.Faker('phone_number')
+    phone = '+79001234567'  # Фиксированный номер телефона
     city = factory.Faker('city')
     street = factory.Faker('street_name')
     house = factory.Faker('building_number')

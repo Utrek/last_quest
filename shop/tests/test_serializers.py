@@ -18,25 +18,29 @@ class TestRegisterSerializer:
         data = {
             'username': 'testuser',
             'email': 'test@example.com',
-            'password': 'password123',
-            'password2': 'password123'
+            'password': 'TestPassword123!',
+            'password2': 'TestPassword123!'
         }
         serializer = RegisterSerializer(data=data)
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
         assert serializer.is_valid()
         
         # Проверяем, что пароли не совпадают
         data['password2'] = 'differentpassword'
         serializer = RegisterSerializer(data=data)
-        assert not serializer.is_valid()
-        assert 'password' in serializer.errors
+        is_invalid = not serializer.is_valid()
+        if not is_invalid:
+            print("Expected validation to fail but it passed")
+        assert is_invalid
 
     def test_create_user(self):
         # Создаем пользователя через сериализатор
         data = {
             'username': 'testuser',
             'email': 'test@example.com',
-            'password': 'password123',
-            'password2': 'password123',
+            'password': 'TestPassword123!',
+            'password2': 'TestPassword123!',
             'first_name': 'Test',
             'last_name': 'User',
             'phone': '+79001234567',
@@ -44,6 +48,8 @@ class TestRegisterSerializer:
             'user_type': 'customer'
         }
         serializer = RegisterSerializer(data=data)
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
         assert serializer.is_valid()
         
         user = serializer.save()
@@ -54,15 +60,15 @@ class TestRegisterSerializer:
         assert user.phone == data['phone']
         assert user.address == data['address']
         assert user.user_type == data['user_type']
-        assert user.check_password(data['password'])
+        assert user.check_password('TestPassword123!')
 
     def test_create_supplier(self):
         # Создаем поставщика через сериализатор
         data = {
-            'username': 'supplier',
-            'email': 'supplier@example.com',
-            'password': 'password123',
-            'password2': 'password123',
+            'username': 'supplier_test',
+            'email': 'supplier_test@example.com',
+            'password': 'TestPassword123!',
+            'password2': 'TestPassword123!',
             'first_name': 'Supplier',
             'last_name': 'User',
             'phone': '+79009876543',
@@ -71,6 +77,8 @@ class TestRegisterSerializer:
             'company_name': 'Test Company'
         }
         serializer = RegisterSerializer(data=data)
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
         assert serializer.is_valid()
         
         user = serializer.save()

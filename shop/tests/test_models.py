@@ -80,7 +80,7 @@ class TestProductModel:
         assert product.pk is not None
         assert product.name == product_data['name']
         assert product.description == product_data['description']
-        assert product.price == Decimal('199.99')
+        assert float(product.price) == 199.99
         assert product.category.name == category.name
         assert product.stock == product_data['stock']
         assert product.is_active == product_data['is_active']

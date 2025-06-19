@@ -106,8 +106,6 @@ def send_supplier_order_notification(order_id: int) -> bool:
             if supplier not in suppliers_items:
                 suppliers_items[supplier] = []
             
-            # Добавляем свойство total_price для шаблона
-            item.total_price = item.quantity * item.price
             suppliers_items[supplier].append(item)
         
         # Отправляем уведомление каждому поставщику

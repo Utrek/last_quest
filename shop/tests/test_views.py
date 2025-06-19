@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from shop.models import User, Supplier, Product, Category, DeliveryAddress, Order
+from shop.models import User, Supplier, Product, Category, DeliveryAddress, Order, CartItem
 from .factories import (
     UserFactory, SupplierFactory, CategoryFactory, ProductFactory,
     DeliveryAddressFactory, OrderFactory, OrderItemFactory, CartItemFactory
@@ -20,8 +20,8 @@ class TestRegisterView:
         data = {
             'username': 'testuser',
             'email': 'test@example.com',
-            'password': 'securepassword123',
-            'password2': 'securepassword123',
+            'password': 'TestPassword123!',
+            'password2': 'TestPassword123!',
             'first_name': 'Test',
             'last_name': 'User',
             'phone': '+79001234567',
@@ -47,10 +47,10 @@ class TestRegisterView:
     def test_register_supplier(self, api_client):
         url = reverse('register')
         data = {
-            'username': 'supplier',
-            'email': 'supplier@example.com',
-            'password': 'securepassword123',
-            'password2': 'securepassword123',
+            'username': 'supplier_test',
+            'email': 'supplier_test@example.com',
+            'password': 'TestPassword123!',
+            'password2': 'TestPassword123!',
             'first_name': 'Supplier',
             'last_name': 'User',
             'phone': '+79009876543',
@@ -223,4 +223,4 @@ class TestOrderConfirmationView:
         assert product2.stock == 17
         
         # Проверяем, что корзина очищена
-        assert not user.cartitem_set.exists()
+        assert not CartItem.objects.filter(user=user).exists()

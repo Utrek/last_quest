@@ -196,6 +196,10 @@ class TestOrderAPI:
 
     def test_list_orders(self, authenticated_client):
         client, user = authenticated_client
+        
+        # Очищаем существующие заказы пользователя
+        Order.objects.filter(user=user).delete()
+        
         orders = [OrderFactory(user=user) for _ in range(3)]
         
         # Получаем список заказов
@@ -204,11 +208,11 @@ class TestOrderAPI:
         
         # Проверяем ответ
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 3
+        assert len(response.data['results']) == 3
         
         # Проверяем, что все созданные заказы присутствуют в ответе
         order_ids = [order.id for order in orders]
-        response_ids = [order['id'] for order in response.data]
+        response_ids = [order['id'] for order in response.data['results']]
         assert set(order_ids) == set(response_ids)
 
     def test_cancel_order(self, authenticated_client):
@@ -248,11 +252,11 @@ class TestSupplierAPI:
         
         # Проверяем ответ
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data) == 3
+        assert len(response.data['results']) == 3
         
         # Проверяем, что все созданные товары присутствуют в ответе
         product_ids = [product.id for product in products]
-        response_ids = [product['id'] for product in response.data]
+        response_ids = [product['id'] for product in response.data['results']]
         assert set(product_ids) == set(response_ids)
 
     def test_create_product(self, supplier_client):
