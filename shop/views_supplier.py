@@ -2,10 +2,9 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
-from typing import Dict, Any, Optional, Union, List, Tuple, cast
-from .models import Supplier, Product
-from .serializers import ProductSerializer
-from django.db.models import Prefetch
+from .models import Supplier
+
+
 
 class SupplierExportViewSet(viewsets.ViewSet):
     """

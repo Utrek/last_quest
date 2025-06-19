@@ -1,11 +1,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import path
 from .models import (
     User, Supplier, Category, Product, Order, OrderItem, 
     CartItem, DeliveryAddress
 )
-from .admin_views import get_admin_urls, ImportProductsView
+from .admin_views import get_admin_urls
 
 class SupplierAdmin(admin.ModelAdmin):
     list_display = ('user', 'company_name', 'description')

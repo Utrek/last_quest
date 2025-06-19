@@ -2,9 +2,8 @@ import threading
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
-from decimal import Decimal
-from typing import Dict, Any, Optional, Union, List, Tuple, cast, Type
-from .models import Order, User, Supplier
+from typing import Optional, List
+from .models import Order, User
 
 class EmailThread(threading.Thread):
     """

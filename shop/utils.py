@@ -2,8 +2,7 @@ import yaml
 import os
 import re
 from django.conf import settings
-from typing import Dict, Any, Optional, Union, List, Tuple, cast
-from decimal import Decimal
+from typing import Optional, Tuple
 from .models import Product, Supplier, Category
 
 def export_products_to_yaml(supplier: Supplier, filename: Optional[str] = None) -> str:
@@ -110,7 +109,8 @@ def export_products_to_file(supplier: Supplier) -> str:
         
         return filename
 
-def import_products_from_yaml(supplier: Supplier, yaml_data: Optional[str] = None, filename: Optional[str] = None) -> Tuple[int, int]:
+def import_products_from_yaml(supplier: Supplier, yaml_data: Optional[str] = None,
+                             filename: Optional[str] = None) -> Tuple[int, int]:
     """
     Импортирует товары из YAML файла или строки
     

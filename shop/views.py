@@ -3,18 +3,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q, Prefetch
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from .models import Product, Order, OrderItem, Supplier, CartItem, DeliveryAddress
 from .serializers import (
     RegisterSerializer, LoginSerializer, UserSerializer, ProductSerializer, OrderSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CartItemSerializer,
-    DeliveryAddressSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CartItemSerializer
 )
 
 User = get_user_model()
@@ -54,7 +56,9 @@ class LoginView(APIView):
                 user = User.objects.get(email=email)
                 if user.check_password(password):
                     if not user.is_active:
-                        return Response({"error": "Пользователь деактивирован"}, status=status.HTTP_401_UNAUTHORIZED)
+                        return Response(
+                        {"error": "Пользователь деактивирован"}, status=status.HTTP_401_UNAUTHORIZED
+                    )
                     
                     token, created = Token.objects.get_or_create(user=user)
                     
@@ -69,9 +73,14 @@ class LoginView(APIView):
                         }
                     })
                 else:
-                    return Response({"error": "Неверный пароль"}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response(
+                        {"error": "Неверный пароль"}, status=status.HTTP_401_UNAUTHORIZED
+                    )
             except User.DoesNotExist:
-                return Response({"error": "Пользователь с таким email не найден"}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response(
+                    {"error": "Пользователь с таким email не найден"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetRequestView(APIView):
@@ -98,7 +107,9 @@ class PasswordResetRequestView(APIView):
                 
                 return Response({"detail": "Инструкции по сбросу пароля отправлены на вашу почту."})
             except User.DoesNotExist:
-                return Response({"detail": "Пользователь с таким email не найден."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "Пользователь с таким email не найден."}, status=status.HTTP_404_NOT_FOUND
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetConfirmView(APIView):
@@ -128,11 +139,9 @@ class PasswordResetConfirmView(APIView):
 
 class IsSupplier(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and hasattr(request.user, 'is_supplier') and request.user.is_supplier()
-
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie
+        return (request.user.is_authenticated and
+                hasattr(request.user, 'is_supplier') and
+                request.user.is_supplier())
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -193,7 +202,9 @@ class SupplierViewSet(viewsets.ModelViewSet):
             supplier = Supplier.objects.get(user=self.request.user)
             serializer.save(supplier=supplier)
         except Supplier.DoesNotExist:
-            raise permissions.exceptions.PermissionDenied("Только поставщики могут добавлять товары")
+            raise permissions.exceptions.PermissionDenied(
+                "Только поставщики могут добавлять товары"
+            )
     
     @action(detail=False, methods=['post'])
     def toggle_accepting_orders(self, request):
@@ -367,7 +378,6 @@ class CartViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def checkout(self, request):
-        from .email_utils import send_order_confirmation_email
         
         cart_items = CartItem.objects.filter(user=request.user)
         
@@ -490,6 +500,8 @@ class CartViewSet(viewsets.ModelViewSet):
             "supplier_email_sent": supplier_email_sent,
             "order": OrderSerializer(order).data
         }, status=status.HTTP_201_CREATED)
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     """
     API для работы с заказами пользователя
@@ -498,7 +510,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).select_related('delivery_address').prefetch_related(
+        return Order.objects.filter(user=self.request.user).select_related(
+            'delivery_address'
+        ).prefetch_related(
             Prefetch('items', queryset=OrderItem.objects.select_related('product'))
         ).order_by('-created_at')
     

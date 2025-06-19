@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from django.core import mail
+
 from shop.tasks import (
     send_email, send_order_confirmation_email,
     send_supplier_order_notification, do_import
 )
 from .factories import (
-    UserFactory, SupplierFactory, CategoryFactory, ProductFactory,
+    UserFactory, SupplierFactory, ProductFactory,
     OrderFactory, OrderItemFactory
 )
 

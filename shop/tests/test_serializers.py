@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from shop.serializers import (
-    RegisterSerializer, LoginSerializer, UserSerializer, ProductSerializer,
+    RegisterSerializer, LoginSerializer, ProductSerializer,
     OrderSerializer, CartItemSerializer, DeliveryAddressSerializer
 )
 from .factories import (

@@ -1,9 +1,7 @@
 import pytest
 from decimal import Decimal
 from django.contrib.auth import get_user_model
-from shop.models import (
-    Supplier, Category, Product, DeliveryAddress, Order, OrderItem, CartItem
-)
+from shop.models import Product
 from .factories import (
     UserFactory, SupplierFactory, CategoryFactory, ProductFactory,
     DeliveryAddressFactory, OrderFactory, OrderItemFactory, CartItemFactory

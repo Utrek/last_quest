@@ -2,11 +2,10 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
-from django.contrib.auth import get_user_model
-from shop.models import User, Supplier, Product, Category, DeliveryAddress, Order, CartItem
+from shop.models import User, Supplier, DeliveryAddress, Order, CartItem
 from .factories import (
-    UserFactory, SupplierFactory, CategoryFactory, ProductFactory,
-    DeliveryAddressFactory, OrderFactory, OrderItemFactory, CartItemFactory
+    UserFactory, ProductFactory,
+    DeliveryAddressFactory, CartItemFactory
 )
 
 @pytest.fixture

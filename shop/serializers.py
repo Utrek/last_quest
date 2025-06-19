@@ -1,10 +1,12 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
-from .models import Product, Order, OrderItem, Supplier, Category, CartItem, DeliveryAddress
+from .models import Product, Order, OrderItem, Supplier, CartItem, DeliveryAddress
 
 User = get_user_model()
+
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -16,7 +18,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'phone', 'address', 'user_type', 'company_name')
+        fields = (
+            'username', 'password', 'password2', 'email', 'first_name', 'last_name',
+            'phone', 'address', 'user_type', 'company_name'
+        )
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -67,7 +72,10 @@ class SupplierSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ('id', 'name', 'description', 'price', 'supplier', 'category', 'stock', 'image', 'is_active', 'characteristics')
+        fields = (
+            'id', 'name', 'description', 'price', 'supplier', 'category',
+            'stock', 'image', 'is_active', 'characteristics'
+        )
         read_only_fields = ('supplier',)
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -102,7 +110,10 @@ class OrderSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Order
-        fields = ('id', 'user', 'delivery_address', 'delivery_address_id', 'created_at', 'updated_at', 'status', 'status_display', 'total_amount', 'items')
+        fields = (
+            'id', 'user', 'delivery_address', 'delivery_address_id', 'created_at', 'updated_at',
+            'status', 'status_display', 'total_amount', 'items'
+        )
         read_only_fields = ('user', 'created_at', 'updated_at')
     
     def get_status_display(self, obj):
@@ -137,7 +148,10 @@ class CartItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CartItem
-        fields = ('id', 'product', 'product_name', 'product_price', 'product_image', 'product_details', 'quantity', 'total_price')
+        fields = (
+            'id', 'product', 'product_name', 'product_price', 'product_image',
+            'product_details', 'quantity', 'total_price'
+        )
     
     def get_product_details(self, obj):
         return {
@@ -155,4 +169,3 @@ class CartItemSerializer(serializers.ModelSerializer):
         instance.quantity = int(quantity) if quantity else instance.quantity
         instance.save()
         return instance
-

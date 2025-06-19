@@ -2,8 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
-from typing import Dict, Any, Optional, Union, List, Tuple, cast
-from .models import Order, CartItem, DeliveryAddress, OrderItem
+from .models import Order, CartItem
 from .serializers import OrderSerializer
 from .email_utils import send_order_confirmation_email_async
 
@@ -67,7 +66,8 @@ class OrderConfirmationView(viewsets.ViewSet):
             if cart_item.product.stock < cart_item.quantity:
                 order.delete()
                 return Response(
-                    {"error": f"Недостаточно товара {cart_item.product.name} на складе. Доступно: {cart_item.product.stock}"},
+                    {"error": f"Недостаточно товара {cart_item.product.name} на складе. "
+                              f"Доступно: {cart_item.product.stock}"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             

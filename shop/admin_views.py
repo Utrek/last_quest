@@ -1,4 +1,4 @@
-from django.contrib import admin
+
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
@@ -9,7 +9,7 @@ from django.views import View
 from .models import Supplier
 from .tasks import do_import
 import os
-from typing import Dict, Any, List, Optional, Union, Type
+from typing import Any, List
 
 @method_decorator(staff_member_required, name='dispatch')
 class ImportProductsView(View):

@@ -1,11 +1,10 @@
 import pytest
-import json
 from decimal import Decimal
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from shop.models import Product, Category, Supplier, CartItem, Order, DeliveryAddress
+from shop.models import Product, CartItem, Order
 from .factories import (
     UserFactory, SupplierFactory, CategoryFactory, ProductFactory,
     DeliveryAddressFactory, OrderFactory, OrderItemFactory, CartItemFactory

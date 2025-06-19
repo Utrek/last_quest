@@ -2,25 +2,25 @@ from celery import shared_task
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional
 import yaml
 import logging
 
 logger = logging.getLogger(__name__)
 
 @shared_task
-def send_email(subject: str, text_content: str, from_email: str, 
+def send_email(subject: str, text_content: str, from_email: str,
                recipient_list: List[str], html_content: Optional[str] = None) -> bool:
     """
     Отправляет email асинхронно через Celery
-    
+
     Args:
         subject: Тема письма
         text_content: Текстовое содержимое письма
         from_email: Email отправителя
         recipient_list: Список получателей
         html_content: HTML содержимое письма (опционально)
-        
+
     Returns:
         bool: True если email отправлен успешно, иначе False
     """
