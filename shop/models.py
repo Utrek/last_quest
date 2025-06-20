@@ -66,7 +66,8 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True, db_index=True, verbose_name="Активен")
     sku = models.CharField(
         max_length=100, blank=True, null=True, unique=True,
-        help_text="Уникальный идентификатор товара", db_index=True, verbose_name="Артикул"
+        help_text="Уникальный идентификатор товара", 
+        db_index=True, verbose_name="Артикул"
     )
     characteristics = models.JSONField(blank=True, null=True, default=dict, verbose_name="Характеристики")
     
@@ -128,7 +129,10 @@ class Product(models.Model):
 
 
 class DeliveryAddress(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='delivery_addresses', verbose_name="Пользователь")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, 
+        related_name='delivery_addresses', verbose_name="Пользователь"
+    )
     name = models.CharField(
         max_length=100, help_text="Название адреса (например, 'Дом', 'Работа')",
         verbose_name="Название"
@@ -201,7 +205,10 @@ class Order(models.Model):
         ('cancelled', 'Отменен'),
     )
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name="Пользователь")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, 
+        related_name='orders', verbose_name="Пользователь"
+    )
     delivery_address = models.ForeignKey(
         DeliveryAddress, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='orders', verbose_name="Адрес доставки"
@@ -234,7 +241,9 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name="Заказ")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")  # Цена на момент заказа
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Цена"
+    )  # Цена на момент заказа
     
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
@@ -255,7 +264,10 @@ class OrderItem(models.Model):
 
 
 class CartItem(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart_items', verbose_name="Пользователь")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, 
+        related_name='cart_items', verbose_name="Пользователь"
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")

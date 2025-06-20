@@ -27,7 +27,10 @@ def main():
         if "error" in result:
             print(f"Ошибка: {result['error']}")
         else:
-            print(f"Успешно импортировано товаров: {result['created']} создано, {result['updated']} обновлено")
+            print(
+                f"Успешно импортировано товаров: {result['created']} создано, "
+                f"{result['updated']} обновлено"
+            )
             
         if "errors" in result:
             print("\nОшибки при импорте отдельных товаров:")

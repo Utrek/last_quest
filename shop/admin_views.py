@@ -54,7 +54,10 @@ class ImportProductsView(View):
             
             messages.success(
                 request, 
-                f"Задача импорта запущена (ID: {task.id}). Результаты будут доступны после завершения."
+                (
+                    f"Задача импорта запущена (ID: {task.id}). "
+                    f"Результаты будут доступны после завершения."
+                )
             )
         except Exception as e:
             messages.error(request, f"Ошибка при импорте: {str(e)}")

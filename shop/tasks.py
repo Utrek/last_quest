@@ -156,7 +156,8 @@ def do_import(supplier_id: int, yaml_data: Optional[str] = None, filename: Optio
         filename: путь к файлу для чтения (если yaml_data=None)
     
     Returns:
-        dict: Результат импорта с количеством созданных и обновленных товаров
+        dict: Результат импорта с количеством созданных 
+              и обновленных товаров
     """
     from .models import Supplier, Product, Category
     
@@ -215,7 +216,8 @@ def do_import(supplier_id: int, yaml_data: Optional[str] = None, filename: Optio
                             parameters.pop('description', None)
                             characteristics = parameters
                         else:
-                            # Если нет отдельного описания, создаем его из параметров
+                            # Если нет отдельного описания, 
+                            # создаем его из параметров
                             params = []
                             for key, value in item['parameters'].items():
                                 params.append(f"{key}: {value}")

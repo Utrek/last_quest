@@ -33,7 +33,10 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Интернет-магазин API",
         default_version='v1',
-        description="API для интернет-магазина с поддержкой множества поставщиков",
+        description=(
+            "API для интернет-магазина с поддержкой "
+            "множества поставщиков"
+        ),
         terms_of_service="https://www.example.com/terms/",
         contact=openapi.Contact(email="contact@example.com"),
         license=openapi.License(name="BSD License"),

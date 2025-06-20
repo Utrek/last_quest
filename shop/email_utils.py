@@ -164,7 +164,8 @@ def send_registration_confirmation_email_async(user: User) -> bool:
 
 def send_supplier_order_notification_async(order: Order) -> bool:
     """
-    Асинхронно отправляет уведомление поставщикам о новом заказе через Celery
+    Асинхронно отправляет уведомление поставщикам о новом заказе 
+    через Celery
     
     Args:
         order: объект Order

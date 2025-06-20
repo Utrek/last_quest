@@ -57,7 +57,8 @@ class LoginView(APIView):
                 if user.check_password(password):
                     if not user.is_active:
                         return Response(
-                        {"error": "Пользователь деактивирован"}, status=status.HTTP_401_UNAUTHORIZED
+                        {"error": "Пользователь деактивирован"}, 
+                        status=status.HTTP_401_UNAUTHORIZED
                     )
                     
                     token, created = Token.objects.get_or_create(user=user)
@@ -105,10 +106,13 @@ class PasswordResetRequestView(APIView):
                     fail_silently=False,
                 )
                 
-                return Response({"detail": "Инструкции по сбросу пароля отправлены на вашу почту."})
+                return Response({
+                    "detail": "Инструкции по сбросу пароля отправлены на вашу почту."
+                })
             except User.DoesNotExist:
                 return Response(
-                    {"detail": "Пользователь с таким email не найден."}, status=status.HTTP_404_NOT_FOUND
+                    {"detail": "Пользователь с таким email не найден."}, 
+                    status=status.HTTP_404_NOT_FOUND
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -121,7 +125,10 @@ class PasswordResetConfirmView(APIView):
             try:
                 token_parts = serializer.validated_data['token'].split('/')
                 if len(token_parts) != 2:
-                    return Response({"detail": "Неверный формат токена."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"detail": "Неверный формат токена."}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                     
                 uid, token = token_parts
                 uid = force_str(urlsafe_base64_decode(uid))
@@ -132,9 +139,15 @@ class PasswordResetConfirmView(APIView):
                     user.save()
                     return Response({"detail": "Пароль успешно изменен."})
                 else:
-                    return Response({"detail": "Недействительный токен."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"detail": "Недействительный токен."}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-                return Response({"detail": "Недействительная ссылка для сброса пароля."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Недействительная ссылка для сброса пароля."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class IsSupplier(permissions.BasePermission):
@@ -217,7 +230,8 @@ class SupplierViewSet(viewsets.ModelViewSet):
     def orders(self, request):
         try:
             supplier = Supplier.objects.get(user=self.request.user)
-            # Получаем заказы, содержащие товары этого поставщика
+            # Получаем заказы, содержащие товары 
+            # этого поставщика
             supplier_products = Product.objects.filter(supplier=supplier)
             order_items = OrderItem.objects.filter(product__in=supplier_products)
             
@@ -298,7 +312,8 @@ class SupplierViewSet(viewsets.ModelViewSet):
             supplier = Supplier.objects.get(user=self.request.user)
             yaml_data = export_products_to_yaml(supplier)
             
-            # Создаем безопасное имя файла из названия компании или имени пользователя
+            # Создаем безопасное имя файла из названия компании 
+            # или имени пользователя
             company_name = supplier.user.company_name or supplier.user.username
             safe_filename = re.sub(r'[^\w\-_\.]', '_', company_name)
             filename = f"{safe_filename}_products.yaml"
@@ -414,14 +429,16 @@ class CartViewSet(viewsets.ModelViewSet):
                     'available': cart_item.product.stock
                 })
         
-        # Если есть товары с недостаточным количеством, предлагаем вариант
+        # Если есть товары с недостаточным количеством, 
+        # предлагаем вариант
         if insufficient_items:
             return Response({
                 "warning": "Недостаточно товаров на складе",
                 "insufficient_items": insufficient_items,
                 "options": [
                     "Уменьшите количество товаров в корзине",
-                    "Используйте параметр 'partial=true' для оформления заказа с доступным количеством"
+                    ("Используйте параметр 'partial=true' для оформления "
+                     "заказа с доступным количеством")
                 ]
             }, status=status.HTTP_400_BAD_REQUEST)
         
@@ -441,11 +458,17 @@ class CartViewSet(viewsets.ModelViewSet):
             # Определяем количество для заказа
             quantity = min(cart_item.quantity, cart_item.product.stock) if partial else cart_item.quantity
             
-            # Если не частичный заказ и недостаточно товара, отменяем
+            # Если не частичный заказ и недостаточно товара, 
+            # отменяем
             if not partial and cart_item.product.stock < cart_item.quantity:
                 order.delete()
                 return Response(
-                    {"error": f"Недостаточно товара {cart_item.product.name} на складе. Доступно: {cart_item.product.stock}"},
+                    {
+                        "error": (
+                            f"Недостаточно товара {cart_item.product.name} на складе. "
+                            f"Доступно: {cart_item.product.stock}"
+                        )
+                    },
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -479,7 +502,12 @@ class CartViewSet(viewsets.ModelViewSet):
         if not order.items.exists():
             order.delete()
             return Response(
-                {"error": "Не удалось оформить заказ, все товары отсутствуют на складе"},
+                {
+                    "error": (
+                        "Не удалось оформить заказ, все товары "
+                        "отсутствуют на складе"
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -487,15 +515,22 @@ class CartViewSet(viewsets.ModelViewSet):
         order.total_amount = total
         order.save()
         
-        # Отправляем email с подтверждением заказа асинхронно
-        from .email_utils import send_order_confirmation_email_async, send_supplier_order_notification_async
+        # Отправляем email с подтверждением заказа 
+        # асинхронно
+        from .email_utils import (
+            send_order_confirmation_email_async, 
+            send_supplier_order_notification_async
+        )
         email_sent = send_order_confirmation_email_async(order)
         
         # Отправляем уведомление поставщикам
         supplier_email_sent = send_supplier_order_notification_async(order)
         
         return Response({
-            "message": "Заказ успешно оформлен" + (" (частично)" if partial else ""),
+            "message": (
+                "Заказ успешно оформлен" + 
+                (" (частично)" if partial else "")
+            ),
             "email_sent": email_sent,
             "supplier_email_sent": supplier_email_sent,
             "order": OrderSerializer(order).data
@@ -550,7 +585,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.status = 'cancelled'
             order.save()
             
-            # Возвращаем полную информацию о заказе с обновленным статусом
+            # Возвращаем полную информацию о заказе 
+            # с обновленным статусом
             serializer = self.get_serializer(order)
             return Response({
                 "detail": "Заказ успешно отменен",

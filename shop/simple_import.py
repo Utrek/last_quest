@@ -106,7 +106,10 @@ def simple_import_from_yaml(supplier_user):
     result = {
         "created": created_count,
         "updated": updated_count,
-        "message": f"Импортировано товаров: {created_count} создано, {updated_count} обновлено"
+        "message": (
+            f"Импортировано товаров: {created_count} создано, "
+            f"{updated_count} обновлено"
+        )
     }
     
     if errors:

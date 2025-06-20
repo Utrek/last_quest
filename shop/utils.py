@@ -80,7 +80,8 @@ def export_products_to_file(supplier: Supplier) -> str:
         # Создаем директорию для экспорта, если ее нет
         os.makedirs(export_dir, exist_ok=True)
         
-        # Создаем безопасное имя файла из названия компании или имени пользователя
+        # Создаем безопасное имя файла из названия компании 
+    # или имени пользователя
         company_name = supplier.user.company_name or supplier.user.username
         safe_filename = re.sub(r'[^\w\-_\.]', '_', company_name)
         filename = os.path.join(export_dir, f"{safe_filename}_products.yaml")
@@ -120,7 +121,8 @@ def import_products_from_yaml(supplier: Supplier, yaml_data: Optional[str] = Non
         filename: путь к файлу для чтения (если yaml_data=None)
     
     Returns:
-        tuple: (количество созданных товаров, количество обновленных товаров)
+        tuple: (количество созданных товаров, 
+                количество обновленных товаров)
     """
     if yaml_data is None and filename:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -173,7 +175,8 @@ def import_products_from_yaml(supplier: Supplier, yaml_data: Optional[str] = Non
                         parameters.pop('description', None)
                         characteristics = parameters
                     else:
-                        # Если нет отдельного описания, создаем его из параметров
+                        # Если нет отдельного описания, 
+                        # создаем его из параметров
                         params = []
                         for key, value in item['parameters'].items():
                             params.append(f"{key}: {value}")

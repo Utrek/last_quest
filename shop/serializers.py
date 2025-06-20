@@ -169,3 +169,4 @@ class CartItemSerializer(serializers.ModelSerializer):
         instance.quantity = int(quantity) if quantity else instance.quantity
         instance.save()
         return instance
+    
