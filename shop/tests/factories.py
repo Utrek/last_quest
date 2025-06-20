@@ -8,6 +8,7 @@ from decimal import Decimal
 
 User = get_user_model()
 
+
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
@@ -20,6 +21,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_name = factory.Faker('last_name')
     is_active = True
     user_type = 'customer'
+
 
 class SupplierUserFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -34,6 +36,7 @@ class SupplierUserFactory(factory.django.DjangoModelFactory):
     is_active = True
     user_type = 'supplier'
     company_name = factory.Faker('company')
+
 
 class SupplierFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -50,11 +53,13 @@ class SupplierFactory(factory.django.DjangoModelFactory):
             return user.supplier_profile
         return super()._create(model_class, *args, **kwargs)
 
+
 class CategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Category
 
     name = factory.Sequence(lambda n: f'Category {n}')
+
 
 class ProductFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -69,6 +74,7 @@ class ProductFactory(factory.django.DjangoModelFactory):
     is_active = True
     sku = factory.LazyFunction(lambda: f'SKU-{uuid.uuid4().hex[:8]}')
     characteristics = {'color': 'red', 'size': 'M', 'weight': '1kg'}
+
 
 class DeliveryAddressFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -88,6 +94,7 @@ class DeliveryAddressFactory(factory.django.DjangoModelFactory):
     postal_code = factory.Faker('postcode')
     is_default = False
 
+
 class OrderFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Order
@@ -95,6 +102,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     delivery_address = factory.SubFactory(DeliveryAddressFactory)
     status = 'pending'
+
 
 class OrderItemFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -104,6 +112,7 @@ class OrderItemFactory(factory.django.DjangoModelFactory):
     product = factory.SubFactory(ProductFactory)
     quantity = 1
     price = factory.SelfAttribute('product.price')
+
 
 class CartItemFactory(factory.django.DjangoModelFactory):
     class Meta:

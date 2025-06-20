@@ -8,9 +8,11 @@ from .factories import (
     DeliveryAddressFactory, CartItemFactory
 )
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 @pytest.mark.django_db
 class TestRegisterView:
@@ -27,14 +29,14 @@ class TestRegisterView:
             'address': 'Test Address',
             'user_type': 'customer'
         }
-        
+
         response = api_client.post(url, data, format='json')
-        
+
         assert response.status_code == status.HTTP_201_CREATED
         assert 'token' in response.data
         assert 'user' in response.data
         assert response.data['user']['email'] == data['email']
-        
+
         # Проверяем, что пользователь создан
         user = User.objects.get(email=data['email'])
         assert user.username == data['username']
@@ -57,14 +59,14 @@ class TestRegisterView:
             'user_type': 'supplier',
             'company_name': 'Test Company'
         }
-        
+
         response = api_client.post(url, data, format='json')
-        
+
         assert response.status_code == status.HTTP_201_CREATED
         assert 'token' in response.data
         assert 'user' in response.data
         assert response.data['user']['email'] == data['email']
-        
+
         # Проверяем, что пользователь создан
         user = User.objects.get(email=data['email'])
         assert user.username == data['username']
@@ -73,10 +75,11 @@ class TestRegisterView:
         assert user.user_type == 'supplier'
         assert user.company_name == data['company_name']
         assert user.is_supplier() is True
-        
+
         # Проверяем, что профиль поставщика создан
         supplier = Supplier.objects.get(user=user)
         assert supplier is not None
+
 
 @pytest.mark.django_db
 class TestLoginView:
@@ -85,16 +88,16 @@ class TestLoginView:
         user = UserFactory(email='test@example.com')
         user.set_password('password123')
         user.save()
-        
+
         # Входим в систему
         url = reverse('login')
         data = {
             'email': 'test@example.com',
             'password': 'password123'
         }
-        
+
         response = api_client.post(url, data, format='json')
-        
+
         # Проверяем ответ
         assert response.status_code == status.HTTP_200_OK
         assert 'token' in response.data
@@ -106,19 +109,20 @@ class TestLoginView:
         user = UserFactory(email='test@example.com')
         user.set_password('password123')
         user.save()
-        
+
         # Пытаемся войти с неверным паролем
         url = reverse('login')
         data = {
             'email': 'test@example.com',
             'password': 'wrongpassword'
         }
-        
+
         response = api_client.post(url, data, format='json')
-        
+
         # Проверяем ответ
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert 'error' in response.data
+
 
 @pytest.mark.django_db
 class TestDeliveryAddressView:
@@ -127,7 +131,7 @@ class TestDeliveryAddressView:
         user = UserFactory()
         client = APIClient()
         client.force_authenticate(user=user)
-        
+
         # Создаем адрес доставки
         url = reverse('addresses-list')
         data = {
@@ -146,34 +150,35 @@ class TestDeliveryAddressView:
             'postal_code': '123456',
             'is_default': True
         }
-        
+
         response = client.post(url, data, format='json')
-        
+
         # Проверяем ответ
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['name'] == data['name']
         assert response.data['city'] == data['city']
         assert response.data['is_default'] is True
-        
+
         # Проверяем, что адрес создан
         address = DeliveryAddress.objects.get(id=response.data['id'])
         assert address.user == user
         assert address.name == data['name']
         assert address.city == data['city']
         assert address.is_default is True
-        
+
         # Создаем второй адрес
         data['name'] = 'Work'
         data['is_default'] = True
         response = client.post(url, data, format='json')
-        
+
         # Проверяем, что второй адрес стал адресом по умолчанию
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['is_default'] is True
-        
+
         # Проверяем, что первый адрес больше не является адресом по умолчанию
         address.refresh_from_db()
         assert address.is_default is False
+
 
 @pytest.mark.django_db
 class TestOrderConfirmationView:
@@ -182,44 +187,44 @@ class TestOrderConfirmationView:
         user = UserFactory()
         client = APIClient()
         client.force_authenticate(user=user)
-        
+
         # Создаем адрес доставки
         address = DeliveryAddressFactory(user=user)
-        
+
         # Создаем товары и добавляем их в корзину
         product1 = ProductFactory(stock=10)
         product2 = ProductFactory(stock=20)
-        
+
         cart_item1 = CartItemFactory(user=user, product=product1, quantity=2)
         cart_item2 = CartItemFactory(user=user, product=product2, quantity=3)
-        
+
         # Подтверждаем заказ
         url = reverse('order-confirmation-confirm')
         data = {
             'delivery_address_id': address.id
         }
-        
+
         response = client.post(url, data, format='json')
-        
+
         # Проверяем ответ
         assert response.status_code == status.HTTP_201_CREATED
         assert 'order' in response.data
-        
+
         # Проверяем, что заказ создан
         order_id = response.data['order']['id']
         order = Order.objects.get(id=order_id)
         assert order.user == user
         assert order.delivery_address == address
         assert order.status == 'pending'
-        
+
         # Проверяем, что товары добавлены в заказ
         assert order.items.count() == 2
-        
+
         # Проверяем, что количество товаров уменьшилось
         product1.refresh_from_db()
         product2.refresh_from_db()
         assert product1.stock == 8
         assert product2.stock == 17
-        
+
         # Проверяем, что корзина очищена
         assert not CartItem.objects.filter(user=user).exists()

@@ -7,7 +7,6 @@ from .models import Product, Order, OrderItem, Supplier, CartItem, DeliveryAddre
 User = get_user_model()
 
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
@@ -31,12 +30,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
-        
+
         # Если пользователь - поставщик, создаем профиль поставщика
         if user.user_type == 'supplier':
             Supplier.objects.get_or_create(user=user)
-        
+
         return user
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -45,8 +45,10 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
         return data
 
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
+
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
@@ -58,16 +60,19 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password": "Пароли не совпадают."})
         return attrs
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'phone', 'address', 'user_type', 'company_name')
         extra_kwargs = {'password': {'write_only': True}}
 
+
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
         fields = ('id', 'user', 'description', 'logo')
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,36 +83,39 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('supplier',)
 
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
-    
+
     class Meta:
         model = OrderItem
         fields = ('id', 'product', 'product_name', 'quantity', 'price')
+
 
 class DeliveryAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryAddress
         fields = (
-            'id', 'name', 'last_name', 'first_name', 'middle_name', 
-            'recipient_name', 'email', 'phone', 'city', 'street', 
-            'house', 'building', 'structure', 'apartment', 
+            'id', 'name', 'last_name', 'first_name', 'middle_name',
+            'recipient_name', 'email', 'phone', 'city', 'street',
+            'house', 'building', 'structure', 'apartment',
             'postal_code', 'address', 'is_default'
         )
         read_only_fields = ('user', 'address')
+
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     status_display = serializers.SerializerMethodField()
     delivery_address = DeliveryAddressSerializer(read_only=True)
     delivery_address_id = serializers.PrimaryKeyRelatedField(
-        queryset=DeliveryAddress.objects.all(), 
+        queryset=DeliveryAddress.objects.all(),
         source='delivery_address',
         write_only=True,
         required=False
     )
     total_amount = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Order
         fields = (
@@ -115,7 +123,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'status', 'status_display', 'total_amount', 'items'
         )
         read_only_fields = ('user', 'created_at', 'updated_at')
-    
+
     def get_status_display(self, obj):
         status_map = {
             'pending': 'Ожидание',
@@ -125,11 +133,11 @@ class OrderSerializer(serializers.ModelSerializer):
             'cancelled': 'Отменен'
         }
         return status_map.get(obj.status, obj.status)
-    
+
     def get_total_amount(self, obj):
         total = sum(item.quantity * item.price for item in obj.items.all())
         return str(total)
-        
+
     def validate_delivery_address_id(self, value):
         """
         Проверяем, что адрес доставки принадлежит пользователю
@@ -139,34 +147,34 @@ class OrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Этот адрес доставки не принадлежит вам")
         return value
 
+
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_price = serializers.ReadOnlyField(source='product.price')
     product_image = serializers.ImageField(source='product.image', read_only=True)
     product_details = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = CartItem
         fields = (
             'id', 'product', 'product_name', 'product_price', 'product_image',
             'product_details', 'quantity', 'total_price'
         )
-    
+
     def get_product_details(self, obj):
         return {
             'name': obj.product.name,
             'price': str(obj.product.price)
         }
-    
+
     def get_total_price(self, obj):
         from decimal import Decimal
         total = Decimal(str(obj.quantity)) * Decimal(str(obj.product.price))
         return f"{total:.2f}"
-        
+
     def update(self, instance, validated_data):
         quantity = validated_data.get('quantity', instance.quantity)
         instance.quantity = int(quantity) if quantity else instance.quantity
         instance.save()
         return instance
-    

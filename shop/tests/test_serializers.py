@@ -11,6 +11,7 @@ from .factories import (
 
 User = get_user_model()
 
+
 @pytest.mark.django_db
 class TestRegisterSerializer:
     def test_validate_passwords_match(self):
@@ -25,7 +26,7 @@ class TestRegisterSerializer:
         if not serializer.is_valid():
             print("Validation errors:", serializer.errors)
         assert serializer.is_valid()
-        
+
         # Проверяем, что пароли не совпадают
         data['password2'] = 'differentpassword'
         serializer = RegisterSerializer(data=data)
@@ -51,7 +52,7 @@ class TestRegisterSerializer:
         if not serializer.is_valid():
             print("Validation errors:", serializer.errors)
         assert serializer.is_valid()
-        
+
         user = serializer.save()
         assert user.username == data['username']
         assert user.email == data['email']
@@ -80,13 +81,14 @@ class TestRegisterSerializer:
         if not serializer.is_valid():
             print("Validation errors:", serializer.errors)
         assert serializer.is_valid()
-        
+
         user = serializer.save()
         assert user.username == data['username']
         assert user.email == data['email']
         assert user.user_type == data['user_type']
         assert user.company_name == data['company_name']
         assert hasattr(user, 'supplier_profile')
+
 
 @pytest.mark.django_db
 class TestLoginSerializer:
@@ -95,7 +97,7 @@ class TestLoginSerializer:
         user = UserFactory(email='test@example.com')
         user.set_password('password123')
         user.save()
-        
+
         # Проверяем валидацию с правильными данными
         data = {
             'email': 'test@example.com',
@@ -103,11 +105,12 @@ class TestLoginSerializer:
         }
         serializer = LoginSerializer(data=data)
         assert serializer.is_valid()
-        
+
         # Проверяем валидацию с неправильным паролем
         data['password'] = 'wrongpassword'
         serializer = LoginSerializer(data=data)
         assert serializer.is_valid()  # Валидация проходит, но аутентификация будет неуспешной
+
 
 @pytest.mark.django_db
 class TestProductSerializer:
@@ -119,11 +122,11 @@ class TestProductSerializer:
             stock=10,
             characteristics={'color': 'red', 'size': 'M'}
         )
-        
+
         # Сериализуем продукт
         serializer = ProductSerializer(product)
         data = serializer.data
-        
+
         # Проверяем данные
         assert data['id'] == product.id
         assert data['name'] == product.name
@@ -137,7 +140,7 @@ class TestProductSerializer:
         # Создаем категорию и поставщика
         category = CategoryFactory()
         supplier = SupplierFactory()
-        
+
         # Данные для создания продукта
         data = {
             'name': 'New Product',
@@ -152,14 +155,14 @@ class TestProductSerializer:
                 'weight': '2kg'
             }
         }
-        
+
         # Десериализуем данные
         serializer = ProductSerializer(data=data)
         assert serializer.is_valid()
-        
+
         # Сохраняем продукт
         product = serializer.save(supplier=supplier)
-        
+
         # Проверяем данные
         assert product.name == data['name']
         assert product.description == data['description']
@@ -170,6 +173,7 @@ class TestProductSerializer:
         assert product.characteristics == data['characteristics']
         assert product.supplier == supplier
 
+
 @pytest.mark.django_db
 class TestOrderSerializer:
     def test_serialization(self):
@@ -179,11 +183,11 @@ class TestOrderSerializer:
         product2 = ProductFactory(price=199.99)
         item1 = OrderItemFactory(order=order, product=product1, quantity=2, price=99.99)
         item2 = OrderItemFactory(order=order, product=product2, quantity=1, price=199.99)
-        
+
         # Сериализуем заказ
         serializer = OrderSerializer(order)
         data = serializer.data
-        
+
         # Проверяем данные
         assert data['id'] == order.id
         assert data['status'] == order.status
@@ -197,17 +201,18 @@ class TestOrderSerializer:
         assert data['items'][1]['price'] == '199.99'
         assert data['total_amount'] == '399.97'  # 2*99.99 + 1*199.99
 
+
 @pytest.mark.django_db
 class TestCartItemSerializer:
     def test_serialization(self):
         # Создаем элемент корзины
         product = ProductFactory(name='Test Product', price=99.99)
         cart_item = CartItemFactory(product=product, quantity=3)
-        
+
         # Сериализуем элемент корзины
         serializer = CartItemSerializer(cart_item)
         data = serializer.data
-        
+
         # Проверяем данные
         assert data['id'] == cart_item.id
         assert data['product'] == product.id
@@ -216,6 +221,7 @@ class TestCartItemSerializer:
         assert data['product_details']['name'] == product.name
         assert data['product_details']['price'] == '99.99'
         assert data['total_price'] == '299.97'  # 3*99.99
+
 
 @pytest.mark.django_db
 class TestDeliveryAddressSerializer:
@@ -228,11 +234,11 @@ class TestDeliveryAddressSerializer:
             house='10',
             is_default=True
         )
-        
+
         # Сериализуем адрес
         serializer = DeliveryAddressSerializer(address)
         data = serializer.data
-        
+
         # Проверяем данные
         assert data['id'] == address.id
         assert data['name'] == address.name
@@ -245,7 +251,7 @@ class TestDeliveryAddressSerializer:
     def test_deserialization(self):
         # Создаем пользователя
         user = UserFactory()
-        
+
         # Данные для создания адреса
         data = {
             'name': 'Work',
@@ -263,14 +269,14 @@ class TestDeliveryAddressSerializer:
             'postal_code': '123456',
             'is_default': True
         }
-        
+
         # Десериализуем данные
         serializer = DeliveryAddressSerializer(data=data)
         assert serializer.is_valid()
-        
+
         # Сохраняем адрес
         address = serializer.save(user=user)
-        
+
         # Проверяем данные
         assert address.name == data['name']
         assert address.last_name == data['last_name']

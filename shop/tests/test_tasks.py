@@ -10,6 +10,7 @@ from .factories import (
     OrderFactory, OrderItemFactory
 )
 
+
 @pytest.mark.django_db
 class TestEmailTasks:
     @patch('shop.tasks.EmailMultiAlternatives')
@@ -17,7 +18,7 @@ class TestEmailTasks:
         # Настраиваем мок
         mock_instance = MagicMock()
         mock_email.return_value = mock_instance
-        
+
         # Вызываем задачу
         result = send_email(
             subject='Test Subject',
@@ -26,7 +27,7 @@ class TestEmailTasks:
             recipient_list=['to@example.com'],
             html_content='<p>Test HTML Content</p>'
         )
-        
+
         # Проверяем, что email был отправлен
         mock_email.assert_called_once_with(
             'Test Subject', 'Test Content', 'from@example.com', ['to@example.com']
@@ -41,14 +42,14 @@ class TestEmailTasks:
     def test_send_order_confirmation_email(self, mock_send_email):
         # Настраиваем мок
         mock_send_email.delay.return_value.get.return_value = True
-        
+
         # Создаем заказ
         user = UserFactory(email='customer@example.com')
         order = OrderFactory(user=user)
-        
+
         # Вызываем задачу
         result = send_order_confirmation_email(order.id)
-        
+
         # Проверяем, что задача send_email была вызвана
         mock_send_email.delay.assert_called_once()
         args, kwargs = mock_send_email.delay.call_args
@@ -60,27 +61,28 @@ class TestEmailTasks:
     def test_send_supplier_order_notification(self, mock_send_email):
         # Настраиваем мок
         mock_send_email.delay.return_value = MagicMock()
-        
+
         # Создаем заказ с товарами от поставщика
         supplier_user = UserFactory(email='supplier@example.com', user_type='supplier')
         supplier = SupplierFactory(user=supplier_user)
         product = ProductFactory(supplier=supplier)
         order = OrderFactory()
         order_item = OrderItemFactory(order=order, product=product)
-        
+
         # Вызываем задачу
         result = send_supplier_order_notification(order.id)
-        
+
         # Проверяем, что задача send_email была вызвана
         mock_send_email.delay.assert_called_once()
         assert result is True
+
 
 @pytest.mark.django_db
 class TestImportTask:
     def test_do_import(self):
         # Создаем поставщика
         supplier = SupplierFactory()
-        
+
         # Создаем данные для импорта
         yaml_data = """
         shop: Test Shop
@@ -100,16 +102,16 @@ class TestImportTask:
               color: red
               size: M
         """
-        
+
         # Вызываем задачу
         result = do_import(supplier.id, yaml_data=yaml_data)
-        
+
         # Проверяем результат
         assert result['success'] is True
         assert result['created'] == 1
         assert result['updated'] == 0
         assert result['total'] == 1
-        
+
         # Проверяем, что товар был создан
         from shop.models import Product
         product = Product.objects.get(sku='SKU-001')

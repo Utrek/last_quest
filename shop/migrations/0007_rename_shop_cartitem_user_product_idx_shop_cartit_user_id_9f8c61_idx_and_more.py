@@ -30,7 +30,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cartitem',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shop.product', verbose_name='Товар'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='shop.product', verbose_name='Товар'),
         ),
         migrations.AlterField(
             model_name='cartitem',
@@ -45,7 +46,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cartitem',
             name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cart_items', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='cart_items', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
         ),
         migrations.AlterField(
             model_name='order',
@@ -55,12 +57,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='order',
             name='delivery_address',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='shop.deliveryaddress', verbose_name='Адрес доставки'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                    related_name='orders', to='shop.deliveryaddress', verbose_name='Адрес доставки'),
         ),
         migrations.AlterField(
             model_name='order',
             name='status',
-            field=models.CharField(choices=[('pending', 'Ожидание'), ('processing', 'В обработке'), ('shipped', 'Отправлен'), ('delivered', 'Доставлен'), ('cancelled', 'Отменен')], db_index=True, default='pending', max_length=20, verbose_name='Статус'),
+            field=models.CharField(choices=[('pending', 'Ожидание'), ('processing', 'В обработке'), ('shipped', 'Отправлен'), (
+                'delivered', 'Доставлен'), ('cancelled', 'Отменен')], db_index=True, default='pending', max_length=20, verbose_name='Статус'),
         ),
         migrations.AlterField(
             model_name='order',
@@ -75,12 +79,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='order',
             name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='orders', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
         ),
         migrations.AlterField(
             model_name='orderitem',
             name='order',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='shop.order', verbose_name='Заказ'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='items', to='shop.order', verbose_name='Заказ'),
         ),
         migrations.AlterField(
             model_name='orderitem',
@@ -90,7 +96,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='orderitem',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shop.product', verbose_name='Товар'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='shop.product', verbose_name='Товар'),
         ),
         migrations.AlterField(
             model_name='orderitem',
@@ -100,7 +107,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='product',
             name='category',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='products', to='shop.category', verbose_name='Категория'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                    related_name='products', to='shop.category', verbose_name='Категория'),
         ),
         migrations.AlterField(
             model_name='product',
@@ -130,7 +138,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='product',
             name='sku',
-            field=models.CharField(blank=True, db_index=True, help_text='Уникальный идентификатор товара', max_length=100, null=True, unique=True, verbose_name='Артикул'),
+            field=models.CharField(blank=True, db_index=True, help_text='Уникальный идентификатор товара',
+                                   max_length=100, null=True, unique=True, verbose_name='Артикул'),
         ),
         migrations.AlterField(
             model_name='product',
@@ -140,7 +149,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='product',
             name='supplier',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='products', to='shop.supplier', verbose_name='Поставщик'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='products', to='shop.supplier', verbose_name='Поставщик'),
         ),
         migrations.AlterField(
             model_name='supplier',
@@ -155,6 +165,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='supplier',
             name='user',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='supplier_profile', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
+                                       related_name='supplier_profile', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь'),
         ),
     ]

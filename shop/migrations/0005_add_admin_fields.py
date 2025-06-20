@@ -1,6 +1,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -91,7 +92,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='deliveryaddress',
             name='name',
-            field=models.CharField(help_text="Название адреса (например, 'Дом', 'Работа')", max_length=100, verbose_name='Название'),
+            field=models.CharField(help_text="Название адреса (например, 'Дом', 'Работа')",
+                                   max_length=100, verbose_name='Название'),
         ),
         migrations.AlterField(
             model_name='deliveryaddress',
@@ -116,7 +118,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='deliveryaddress',
             name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='delivery_addresses', to='shop.user', verbose_name='Пользователь'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='delivery_addresses', to='shop.user', verbose_name='Пользователь'),
         ),
         migrations.AlterModelOptions(
             name='category',
@@ -140,7 +143,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name='supplier',
-            options={'ordering': ['user__company_name', 'user__username'], 'verbose_name': 'Поставщик', 'verbose_name_plural': 'Поставщики'},
+            options={'ordering': ['user__company_name', 'user__username'],
+                     'verbose_name': 'Поставщик', 'verbose_name_plural': 'Поставщики'},
         ),
         migrations.AlterModelOptions(
             name='cartitem',

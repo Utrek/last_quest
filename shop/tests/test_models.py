@@ -9,6 +9,7 @@ from .factories import (
 
 User = get_user_model()
 
+
 @pytest.mark.django_db
 class TestUserModel:
     def test_create_user(self):
@@ -23,6 +24,7 @@ class TestUserModel:
         assert user.user_type == 'supplier'
         assert user.is_supplier() is True
 
+
 @pytest.mark.django_db
 class TestSupplierModel:
     def test_create_supplier(self):
@@ -32,12 +34,14 @@ class TestSupplierModel:
         assert supplier.user.is_supplier() is True
         assert str(supplier) == supplier.user.company_name or supplier.user.username
 
+
 @pytest.mark.django_db
 class TestCategoryModel:
     def test_create_category(self):
         category = CategoryFactory()
         assert category.pk is not None
         assert str(category) == category.name
+
 
 @pytest.mark.django_db
 class TestProductModel:
@@ -63,7 +67,7 @@ class TestProductModel:
     def test_product_from_dict(self):
         supplier = SupplierFactory()
         category = CategoryFactory()
-        
+
         product_data = {
             'name': 'Test Product',
             'description': 'Test Description',
@@ -73,7 +77,7 @@ class TestProductModel:
             'is_active': True,
             'sku': 'TEST-SKU-123'
         }
-        
+
         product = Product.from_dict(product_data, supplier)
         assert product.pk is not None
         assert product.name == product_data['name']
@@ -84,6 +88,7 @@ class TestProductModel:
         assert product.is_active == product_data['is_active']
         assert product.sku == product_data['sku']
         assert product.supplier == supplier
+
 
 @pytest.mark.django_db
 class TestDeliveryAddressModel:
@@ -98,21 +103,22 @@ class TestDeliveryAddressModel:
         # Создаем первый адрес - он должен стать адресом по умолчанию
         address1 = DeliveryAddressFactory(user=user)
         assert address1.is_default is True
-        
+
         # Создаем второй адрес - он не должен быть адресом по умолчанию
         address2 = DeliveryAddressFactory(user=user)
         assert address2.is_default is False
-        
+
         # Устанавливаем второй адрес как адрес по умолчанию
         address2.is_default = True
         address2.save()
-        
+
         # Перезагружаем первый адрес из базы данных
         address1.refresh_from_db()
-        
+
         # Проверяем, что первый адрес больше не является адресом по умолчанию
         assert address1.is_default is False
         assert address2.is_default is True
+
 
 @pytest.mark.django_db
 class TestOrderModel:
@@ -127,10 +133,11 @@ class TestOrderModel:
         order = OrderFactory()
         item1 = OrderItemFactory(order=order)
         item2 = OrderItemFactory(order=order)
-        
+
         assert order.items.count() == 2
         assert item1.order == order
         assert item2.order == order
+
 
 @pytest.mark.django_db
 class TestCartItemModel:
